@@ -29,6 +29,12 @@ picoprobe++ benefits from the features of the libraries it uses.
   using simple GPIO input/output, and a second driver using the PIO module of the RP2040/RP2350
   (which yield better performace, of course).
   This could be important in cases where the PIO modules are already used for someting else.
+* picoprobe++ and the libraries it uses try to use abstract C++ interfaces at various places.
+  This results in a better software structure, clearly separating the generic code from the
+  code which varies depending on the specific MCU or board. This also facilitates porting to
+  new MCUs or platforms.
+   
+  
 
 ---
 ### Configuration
@@ -45,6 +51,11 @@ picoprobe++ benefits from the features of the libraries it uses.
 * Using additionl CDC ACM device
 * log levels
 * tbd
+
+---
+### Openocd and the running LED
+
+
 
 ---
 ### Installation
@@ -64,7 +75,7 @@ itself contains submodules like openDAP++ or tinyUSB++:
 
 `git clone https://github.com/Terstegge/picoprobepp.git --recursive`
 
-Then procees with the typical cmake build steps:
+Then proceed with the typical cmake build steps:
 
 `mkdir BUILD;   cd BUILD;   cmake ..;   make -j 5`
 
