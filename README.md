@@ -18,6 +18,13 @@ it is based on the following components:
   
 picoprobe++ benefits from the features of the libraries it uses.
 
+* picoprobe++ uses the YAHAL preemptive multitasking, which simplifies the overall
+  software structure. There are separate tasks for the CDC ACM UART device and the
+  CMSIS-DAP interface (which uses the highest priority). Implementation of tasks
+  is using a Java-style syntax - overriding a virtual run() method, which is very
+  easy to read and understand. Optionally, the YAHAL task monitor can be enabled
+  in the picoprobe++ configuration file, which shows all important task statistics
+  in the debug console every 5 seconds.
 * All needed USB descriptors in picoprobe++ are set up during runtime, which is
   a nice feature of tinyUSB++. So e.g. adding a second CDC ACM device for firmware
   debugging purposes is only 2 lines of code. tinyUSB++ also has full support for
