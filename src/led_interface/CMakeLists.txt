@@ -1,6 +1,6 @@
-target_sources(debug_probe PRIVATE
+target_sources(picoprobe++ PRIVATE
 )
 
-target_include_directories(debug_probe
+target_include_directories(picoprobe++
         PRIVATE .
 )
