@@ -115,7 +115,7 @@ The [RP2350 Launchpad](https://github.com/Terstegge/rp2350b-launchpad-PCB) has s
 like the [WifiTick board](https://github.com/Terstegge/WiFiTick). The ESP8266 on this board is
 programmed with an UART interface, and with older MCU Boards we were able to use the debug UART to
 the host to program the ESP8266 (the target MCU would receive the serial data from the host PC, and
-forward it to the ESP8266 via a second serial interface - like a serial bridge). With the original
+forward it to the ESP8266 via a second serial interface - acting as a serial bridge). With the original
 picoprobe software, we were never able to get this to work. It might be a control line problem (DTR)
 or a general UART performance issue. With picoprobe++, this functionality is working now without
 any problems.

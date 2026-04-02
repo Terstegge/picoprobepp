@@ -29,16 +29,16 @@ using enum TUPP::wPropertyDataType_t;
 #include "task_monitor.h"
 
 int main() {
-    // Get the unique ID of this board
+    // Get the unique ID of this MCU/board
     auto id = unique_id_rp2xxx::read_unique_id_string();
 
     #ifdef DEBUG_UART_ENABLE
-    // Debug UART (same as back channel UART)
+    // Firmware Debug UART
     uart_rp2xxx uart(DEBUG_UART_TX_GPIO, DEBUG_UART_RX_GPIO);
     posix_io::inst.register_stdio(uart);
     #endif
 
-    // Logging control
+    // Logging control for USB and DAP code
     usb_log::inst.setLevel(usb_log::LOG_INFO);
     DAP_log::inst.setLevel(DAP_log::log_level::LOG_INFO);
 
@@ -74,17 +74,20 @@ int main() {
     dap_device.sign_up();
 
     // Set up CDC ACM device to target
-    uart_rp2xxx bc_uart(UART_TARGET_TX_GPIO, UART_TARGET_RX_GPIO);
-    usb_uart_device bc_uart_device(controller, config, bc_uart);
+    uart_rp2xxx target_uart(UART_TARGET_TX_GPIO, UART_TARGET_RX_GPIO);
+    usb_uart_device bc_uart_device(controller, config, target_uart);
+    bc_uart_device.set_FunctionName("Target debug UART");
     bc_uart_device.sign_up();
     bc_uart_device.setPriority(90);
 
     #ifdef DEBUG_USB_UART_ENABLE
     // Set up another CDC ACM device for debugging
+    // the debugger firmware.
     // (connected to stdio of the debugger SW)
     #include "usb_cdc_acm_adapter.h"
-    usb_cdc_acm_adapter ua(controller, config);
-    posix_io::inst.register_stdio(ua);
+    usb_cdc_acm_adapter usb_uart_adapter(controller, config);
+    usb_uart_adapter.set_FunctionName("Firmware debug UART");
+    posix_io::inst.register_stdio(usb_uart_adapter);
     #endif
 
     // Add BOS and MS OS 2.0 descriptor
@@ -94,7 +97,8 @@ int main() {
     // This functional subset is only valid for a
     // specific interface number, here the DAP interface
     usb_ms_func_subset ms_func_subset(ms_os20.header);
-    ms_func_subset.set_bFirstInterface(dap_device.get_interface_number());
+    ms_func_subset.set_bFirstInterface(
+            dap_device.interface_dap.descriptor.bInterfaceNumber);
 
     // The DAP interface will use the WINUSB driver in Windows
     usb_ms_compatible_ID compat_id(ms_func_subset);
@@ -109,16 +113,17 @@ int main() {
 
     // LED handler
     DAP_led leds;
+    // Connect USB/DAP callbacks to the LEDs
     usb_uart_device::uart_tx_cb = [&]()       { leds.trigger_uart_tx_led(); };
     usb_uart_device::uart_rx_cb = [&]()       { leds.trigger_uart_rx_led(); };
     DAP_Protocol::connected_cb  = [&](bool v) { leds.set_connected_led(v);  };
     DAP_Protocol::running_cb    = [&](bool v) { leds.set_running_led(v);    };
 
     #ifdef START_TASK_MONITOR
-    // Optional: Task Monitor
+    // Optional: YAHAL Task Monitor
     task_monitor monitor;
     monitor.sign_up();
-    monitor.setPriority(20);
+    monitor.setPriority(5);
     #endif
 
     // Activate the USB device

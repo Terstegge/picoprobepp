@@ -44,6 +44,7 @@
 
 // Device/Board information if debug probe is fixed to a dev board.
 // Use empty strings if the chip device and board are not know.
+// This configuration assumes a RP2350 Launchpad...
 #define DAP_DEVICE_VENDOR           "Raspberry Pi"
 #define DAP_DEVICE_NAME             "RP2350"
 #define DAP_BOARD_VENDOR            "FH Aachen"

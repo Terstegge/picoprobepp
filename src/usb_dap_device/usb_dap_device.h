@@ -33,9 +33,8 @@ public:
 
     [[noreturn]] void run() override;
 
-    [[nodiscard]] inline uint8_t get_interface_number() const {
-        return _if_dap.descriptor.bInterfaceNumber;
-    }
+    // Read only version of interface descriptor
+    const usb_interface &   interface_dap;
 
 private:
 

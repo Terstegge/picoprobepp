@@ -28,7 +28,10 @@ using enum TUPP::direction_t;
 usb_dap_device::usb_dap_device( usb_device_controller & controller,
                                 usb_configuration & configuration,
                                 DAP_Protocol & dap)
-: task("CMSIS DAP task"), _dap(dap), _configuration(configuration) {
+: task("CMSIS DAP task"),
+  interface_dap(_if_dap),
+  _dap(dap), _configuration(configuration)
+{
     TUPP_LOG(LOG_DEBUG, "usb_dap_device() @%x", this);
 
     // USB interface descriptors config

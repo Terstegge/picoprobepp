@@ -18,8 +18,7 @@ std::function<void()> usb_uart_device::uart_rx_cb;
 usb_uart_device::usb_uart_device(usb_device_controller &ctrl,
                                  usb_configuration &conf,
                                  uart_interface &uart)
-    : usb_cdc_acm_device(ctrl, conf), task("UART ACM task"),
-      _uart(uart)
+    : usb_cdc_acm_device(ctrl, conf), task("UART ACM task"), _uart(uart)
 {
     // Disable the UART FIFOs because we have strange problems with them:
     // Testing with a direct UART loopback, the RX interrupts will not be
