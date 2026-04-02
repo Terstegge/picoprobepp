@@ -1,0 +1,201 @@
+// ---------------------------------------------
+//           This file is part of
+//      _  _   __    _   _    __    __
+//     ( \/ ) /__\  ( )_( )  /__\  (  )
+//      \  / /(__)\  ) _ (  /(__)\  )(__
+//      (__)(__)(__)(_) (_)(__)(__)(____)
+//
+//     Yet Another HW Abstraction Library
+//      Copyright (C) Andreas Terstegge
+//      BSD Licensed (see file LICENSE)
+//
+// ---------------------------------------------
+// PIO code for handling the CMSIS DAP SWD protocol. Every operation
+// starts with a command word, which is written to the TX FIFO. The
+// structure of this word is:
+//
+//        |  31:13 | 12:8 |   7:0  |
+//        | unused |  PC  |  Count |
+//
+// Count specifies the number of bits to read/write or the number of
+// clock cycles MINUS one (a value of 0 will e.g. write one bit, 1 will
+// write two bits, and so on)!
+// PC specifies the command to execute by its PC offset relative to the
+// load address of the PIO program. Available commands are:
+//
+// read
+// ====
+// Read 'Count+1' (1..32) bits from SWDIO/TDO. The result will be
+// pushed to the RX FIFO. For SWD, the SWDIO line has to be set to
+// input mode before!
+//
+// write
+// =====
+// Write 'Count+1' (1..32) bits to SWDIO. The data word to write
+// is written to the TX FIFO after the command word. For SWD, the
+// SWDIO line has to be set to output mode before!
+//
+// read_write
+// ==========
+// Combination of read and write, only used in JTAG mode when TDI
+// and TDO can be used in parallel. Not usable in SWD mode because
+// we have only one data line (SWDIO), which is either input OR
+// output!
+//
+// cycle
+// =====
+// Cycle the SWCLK line for 'Count+1' times.
+//
+// In SWD mode:
+// SWDIO is controlled with 'in'/'out' and 'set' instructions.
+// SWCLK is controlled with a sideset bit.
+//
+// In JTAG mode:
+// TMS is controlled with 'set' instructions
+// TCK is controlled with a sideset bit.
+// TDI is controlled with 'out' instructions
+// TDO is controlled with 'in'  instructions
+//
+// The PIO program uses four SM cycles per SWCLK/TCK cycle. E.g. a
+// SM clock of 1MHz will result in a 250kHz SWCLK/TCK frequency!
+//
+.define PUBLIC SM_CYCLES_PER_DAP_CLK 4
+.program dap_control
+.side_set 1 opt
+
+//------------------------| SWCLK |-------------
+public write:
+    pull
+write1:
+    out     pins, 1     [1] side 0  // Host writes data on neg edge
+    jmp     x--, write1 [1] side 1  // Target samples data on pos edge
+
+    .wrap_target
+next_cmd:
+    pull                    side 0  // Get next command and start
+                                    // with SWCLK=LOW
+    out     x, 8                    // Read count
+    out     pc, 5                   // Jump to command
+
+public read:
+    in      pins, 1     [1] side 1  // Host will read shortly before pos edge.
+                                    // Target will change SWDIO at pos edge.
+                                    // The first bit is driven already
+                                    // (Data Phase Shift)!
+    jmp     x--, read   [1] side 0
+    push
+    jmp     next_cmd
+
+public read_write:
+    pull
+rw_loop:
+    out     pins, 1         side 0  // Host writes data on neg edge
+    in      pins, 1     [1] side 1  // Host will read shortly before pos edge.
+    jmp     x--, rw_loop    side 0
+    push
+    jmp     next_cmd
+
+public cycle:
+    nop                 [1] side 1  // Perform n cycles -> HIGH -> LOW
+    jmp     x--, cycle  [1] side 0
+    jmp     next_cmd
+
+public execute:
+    pull
+    out     exec, 32
+    .wrap
+
+
+% yahal {
+
+// JTAG/SWD PIO command structure
+union __attribute__((__packed__)) swd_cmd_t {
+    struct __attribute__((__packed__)) {
+        uint32_t len    : 8;
+        uint32_t cmd    : 5;
+        uint32_t        : 19;
+    };
+    uint32_t value {0};
+};
+
+void configure_SWD(SM * sm, uint8_t swdio_pin, uint8_t swclk_pin) {
+    // Set the default SM clock rate (250kHz SWCLK)
+    // This value will be overwritten by the DAP protocol code
+    sm->setClock(1000000);
+
+    // Set the PINDIR register. SWDIO and SWCLK
+    // are both outputs as default.
+    sm->setRegister(out_dest_t::PINDIRS, 1, swdio_pin, 1);
+    sm->setRegister(out_dest_t::PINDIRS, 1, swclk_pin, 1);
+
+    // Set the wrap values
+    sm->setWrap(dap_control_wrap_target, dap_control_wrap);
+
+    // Set the PC to the wrap target
+    sm->setRegister(out_dest_t::PC, sm->load_addr + dap_control_wrap_target);
+
+    // Configure sideset functions
+    sm->regs.SM_EXECCTRL.SIDE_EN     = 1;   // see 'opt' above
+    sm->regs.SM_EXECCTRL.SIDE_PINDIR = 0;
+
+    // Configure the shift control register
+    sm->regs.SM_SHIFTCTRL.OUT_SHIFTDIR = 1; // shift right
+    sm->regs.SM_SHIFTCTRL.IN_SHIFTDIR  = 1; // shift right
+    sm->regs.SM_SHIFTCTRL.AUTOPULL     = 0; // no autopull
+    sm->regs.SM_SHIFTCTRL.AUTOPUSH     = 0; // no autopush
+
+    // SWDIO is controlled by IN/OUT and by SET
+    sm->regs.SM_PINCTRL.OUT_COUNT = 1;
+    sm->regs.SM_PINCTRL.OUT_BASE  = swdio_pin;
+    sm->regs.SM_PINCTRL.IN_BASE   = swdio_pin;
+    sm->regs.SM_PINCTRL.SET_COUNT = 1;
+    sm->regs.SM_PINCTRL.SET_BASE  = swdio_pin;
+
+    // SWCLK is controlled via sideset
+    sm->regs.SM_PINCTRL.SIDESET_COUNT = 2;  // includes EN bit
+    sm->regs.SM_PINCTRL.SIDESET_BASE  = swclk_pin;
+}
+
+void configure_JTAG(SM * sm, uint8_t tms_pin, uint8_t tck_pin,
+                             uint8_t tdi_pin, uint8_t tdo_pin) {
+    // Set the default SM clock rate (250kHz TCK)
+    // This value will be overwritten by the DAP protocol code
+    sm->setClock(1000000);
+
+    // Set the PINDIR register for TCK and TDI
+    // (are all outputs in JTAG mode)
+    sm->setRegister(out_dest_t::PINDIRS, 1, tms_pin, 1);
+    sm->setRegister(out_dest_t::PINDIRS, 1, tck_pin, 1);
+    sm->setRegister(out_dest_t::PINDIRS, 1, tdi_pin, 1);
+
+    // Set the wrap values
+    sm->setWrap(dap_control_wrap_target, dap_control_wrap);
+
+    // Set the PC to the wrap target
+    sm->setRegister(out_dest_t::PC, sm->load_addr + dap_control_wrap_target);
+
+    // Configure sideset functions
+    sm->regs.SM_EXECCTRL.SIDE_EN     = 1;   // see 'opt' above
+    sm->regs.SM_EXECCTRL.SIDE_PINDIR = 0;
+
+    // Configure the shift control register
+    sm->regs.SM_SHIFTCTRL.OUT_SHIFTDIR = 1; // shift right
+    sm->regs.SM_SHIFTCTRL.IN_SHIFTDIR  = 1; // shift right
+    sm->regs.SM_SHIFTCTRL.AUTOPULL     = 0; // no autopull
+    sm->regs.SM_SHIFTCTRL.AUTOPUSH     = 0; // no autopush
+
+    // TMS is controlled via SET
+    sm->regs.SM_PINCTRL.SET_COUNT = 1;
+    sm->regs.SM_PINCTRL.SET_BASE  = tms_pin;
+
+    // TCK is controlled via sideset
+    sm->regs.SM_PINCTRL.SIDESET_COUNT  = 2;  // includes EN bit
+    sm->regs.SM_PINCTRL.SIDESET_BASE   = tck_pin;
+
+    // TDI and TDO are controlled by IN/OUT
+    sm->regs.SM_PINCTRL.OUT_COUNT = 1;
+    sm->regs.SM_PINCTRL.OUT_BASE  = tdi_pin;
+    sm->regs.SM_PINCTRL.IN_BASE   = tdo_pin;
+}
+
+%}
