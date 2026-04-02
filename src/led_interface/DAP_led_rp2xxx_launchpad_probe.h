@@ -9,14 +9,14 @@
 // Implementation of LEDs for the RP2040-based debug
 // probe on the RP2040 or RP2350 Launchpad boards.
 // This driver uses PWM control for all LEDS, so the
-// brightness can be adjusted as needed (it was too
+// brightness can be adjusted as needed (it was too high
 // because of too small resistors in the HW design :)
 // This embedded debug probe does not have a separate
 // LED for the 'running' state, so instead the blue
-// LED signalling the DAP connection status will be
+// LED (signalling the DAP connection status) will be
 // blinking when the target is running.
 // UART TX/RX LEDs are handled by a timer, which will
-// switch off the those LEDs after a specific follow up
+// switch off the those LEDs after a specific follow-up
 // time.
 //
 #ifndef DAP_LED_RP2XX0_LP_PROBE_H

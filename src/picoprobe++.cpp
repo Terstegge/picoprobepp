@@ -6,6 +6,12 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
+// picoprobe++ main code. Not so much to do - pick up all the
+// various pieces (DAP interface, CDC ACM UART), and tie them
+// together. Sign up all tasks and start the multitasking kernel.
+// The USB configuration is mainly controlled by the configuration
+// file, depending on the MCU board.
+//
 #include "config.h"
 
 #include "usb_bos.h"
@@ -68,19 +74,23 @@ int main() {
                               .bus_powered   = 1});
     config.set_bMaxPower_mA(100);
 
-    // Set up CMSIS DAP device
+    // Set up CMSIS DAP device. Select DAP HW driver and create
+    // a DAP protocol instance using this driver. Then use the
+    // DAP protocol instance for the USB DAP device, which will
+    // handle the USB bulk endpoints amd process the CMSIS DAP
+    // requests.
     #ifdef DAP_USE_GPIO_BACKEND
     DAP_hw_gpio dap_hw; // use GPIO implementation
     #else
     DAP_hw_pio dap_hw; // use PIO implementation
     #endif
-
     DAP_Protocol dap(dap_hw);
     dap.set_serial(id.data());
     usb_dap_device dap_device(controller, config, dap);
     dap_device.sign_up();
 
-    // Set up CDC ACM device to target
+    // Set up CDC ACM device to target. Create a HW UART object
+    // and forward it to the USB UART device.
     uart_rp2xxx target_uart(UART_TARGET_TX_GPIO, UART_TARGET_RX_GPIO);
     usb_uart_device bc_uart_device(controller, config, target_uart);
     bc_uart_device.set_FunctionName("Target debug UART");
@@ -88,8 +98,7 @@ int main() {
     bc_uart_device.setPriority(90);
 
     #ifdef DEBUG_USB_UART_ENABLE
-    // Set up another CDC ACM device for debugging
-    // the debugger firmware.
+    // Set up another CDC ACM device for debugging the debugger firmware.
     // (connected to stdio of the debugger SW)
     usb_cdc_acm_adapter usb_uart_adapter(controller, config);
     usb_uart_adapter.set_FunctionName("Firmware debug UART");
