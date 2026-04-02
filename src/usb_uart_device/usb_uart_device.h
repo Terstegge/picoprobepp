@@ -1,20 +1,10 @@
-// ---------------------------------------------
-//           This file is part of
-//      _  _   __    _   _    __    __
-//     ( \/ ) /__\  ( )_( )  /__\  (  )
-//      \  / /(__)\  ) _ (  /(__)\  )(__
-//      (__)(__)(__)(_) (_)(__)(__)(____)
+///////////////////////////////////////////////////////////////
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 Andreas Terstegge
 //
-//     Yet Another HW Abstraction Library
-//      Copyright (C) Andreas Terstegge
-//      BSD Licensed (see file LICENSE)
-//
-// ---------------------------------------------
-//
-// Simple USB CDC ACM client class, which controls
-// a real UART (provided via the uart_interface).
-// Synchronization between the data handlers and
-// the task code is implemented with suspend/resume.
+// This file is part of picoprobe++
+// A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
+///////////////////////////////////////////////////////////////
 //
 #ifndef USB_UART_DEVICE_H
 #define USB_UART_DEVICE_H
