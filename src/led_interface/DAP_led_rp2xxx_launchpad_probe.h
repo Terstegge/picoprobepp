@@ -8,6 +8,16 @@
 //
 // Implementation of LEDs for the RP2040-based debug
 // probe on the RP2040 or RP2350 Launchpad boards.
+// This driver uses PWM control for all LEDS, so the
+// brightness can be adjusted as needed (it was too
+// because of too small resistors in the HW design :)
+// This embedded debug probe does not have a separate
+// LED for the 'running' state, so instead the blue
+// LED signalling the DAP connection status will be
+// blinking when the target is running.
+// UART TX/RX LEDs are handled by a timer, which will
+// switch off the those LEDs after a specific follow up
+// time.
 //
 #ifndef DAP_LED_RP2XX0_LP_PROBE_H
 #define DAP_LED_RP2XX0_LP_PROBE_H
@@ -135,17 +145,16 @@ public:
     }
 
     void welcome() override {
-        set_red(true);
-        set_green(true);
-        set_blue(true);
-        task::sleep_ms(200);
-        set_red(false);
-        set_green(false);
-        set_blue(false);
+        // Blink once. Could be adjusted in later firmware versions.
+        for(int i=1; i<=2; ++i) {
+            set_red  (i & 1);
+            set_green(i & 1);
+            set_blue (i & 1);
+            task::sleep_ms(200);
+        }
     }
 
 private:
-
     static inline void set_red(bool b) {
         PWM.CH2_CC.A = b ? RED_BRIGHTNESS : 0; // RED ON
     }
@@ -158,14 +167,15 @@ private:
         PWM.CH1_CC.A = b ? BLUE_BRIGHTNESS : 0; // RED ON
     }
 
-    gpio_rp2xxx     _red   {LED_RED_GPIO};   // UART TX (data from target)
-    gpio_rp2xxx     _green {LED_GREEN_GPIO}; // UART RX (data to target)
-    gpio_rp2xxx     _blue  {LED_BLUE_GPIO};
+    gpio_rp2xxx  _red   {LED_RED_GPIO};   // UART TX (data from target)
+    gpio_rp2xxx  _green {LED_GREEN_GPIO}; // UART RX (data to target)
+    gpio_rp2xxx  _blue  {LED_BLUE_GPIO};
 
-    timer_rp2xxx    _follow_up_timer;
-    timer_rp2xxx    _blue_blink_timer;
+    timer_rp2xxx _follow_up_timer;
+    timer_rp2xxx _blue_blink_timer;
 
-    bool            _just_connected {false};
+    // Flag for detecting the first setting of the 'running' state.
+    bool _just_connected {false};
 };
 
 #endif // DAP_LED_RP2XX0_LP_PROBE_H

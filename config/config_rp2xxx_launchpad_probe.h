@@ -6,7 +6,8 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Debugger configuration file
+// Debugger configuration file for the embedded
+// debug probe on the RP2040 and RP2350 Launchpad
 //
 #ifndef CONFIG_RP2XXX_LAUNCHPAD_PROBE_H
 #define CONFIG_RP2XXX_LAUNCHPAD_PROBE_H
@@ -35,6 +36,7 @@
 
 // CMSIS DAP configuration
 #define DAP_PROTOCOL_VERSION        "2.1.1"
+//#define DAP_USE_GPIO_BACKEND
 
 // Vendor Name and Product Name. If these values are set to empty
 // strings, the USB Device Information is used to obtain these values!

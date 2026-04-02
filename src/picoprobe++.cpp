@@ -21,7 +21,9 @@ using enum TUPP::wPropertyDataType_t;
 
 #include "usb_dap_device.h"
 #include "usb_uart_device.h"
-#include "DAP_hw_rp2040_pio.h"
+#include "usb_cdc_acm_adapter.h"
+#include "DAP_hw_pio.h"
+#include "DAP_hw_gpio.h"
 #include "DAP_log.h"
 
 #include "posix_io.h"
@@ -67,7 +69,12 @@ int main() {
     config.set_bMaxPower_mA(100);
 
     // Set up CMSIS DAP device
-    DAP_hw_rp2040_pio dap_hw; // use PIO implementation
+    #ifdef DAP_USE_GPIO_BACKEND
+    DAP_hw_gpio dap_hw; // use GPIO implementation
+    #else
+    DAP_hw_pio dap_hw; // use PIO implementation
+    #endif
+
     DAP_Protocol dap(dap_hw);
     dap.set_serial(id.data());
     usb_dap_device dap_device(controller, config, dap);
@@ -84,7 +91,6 @@ int main() {
     // Set up another CDC ACM device for debugging
     // the debugger firmware.
     // (connected to stdio of the debugger SW)
-    #include "usb_cdc_acm_adapter.h"
     usb_cdc_acm_adapter usb_uart_adapter(controller, config);
     usb_uart_adapter.set_FunctionName("Firmware debug UART");
     posix_io::inst.register_stdio(usb_uart_adapter);

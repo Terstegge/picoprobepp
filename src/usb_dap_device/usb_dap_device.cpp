@@ -6,7 +6,6 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-#include "config.h"
 #include "usb_dap_device.h"
 #include "usb_structs.h"
 

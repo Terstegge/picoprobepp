@@ -9,8 +9,8 @@
 // DAP HW implementation for the RP2040 MCU using
 // simple bit banging.
 //
-#ifndef DAP_HW_RP2040_GPIO_H
-#define DAP_HW_RP2040_GPIO_H
+#ifndef DAP_HW_GPIO_H
+#define DAP_HW_GPIO_H
 
 #include "config.h"
 #include "gpio_rp2040.h"
@@ -22,13 +22,13 @@
 
 #include <cstdio>
 
-class DAP_hw_rp2040_gpio : public DAP_hw_interface {
+class DAP_hw_gpio : public DAP_hw_interface {
 public:
 
-    explicit DAP_hw_rp2040_gpio()
+    explicit DAP_hw_gpio()
     : _swdio_tms(GPIO_SWDIO_TMS), _swclk_tck(GPIO_SWCLK_TCK),
       _reset(GPIO_RESET), _tdi(GPIO_TDI), _tdo(GPIO_TDO) {
-        DAP_LOG(DAP_log::LOG_DEBUG, "DAP_hw_rp2040_gpio()");
+        DAP_LOG(DAP_log::LOG_DEBUG, "DAP_hw_gpio()");
     }
 
     ///////////////////////////////
@@ -279,4 +279,4 @@ private:
     uint32_t    _frequency {0};
 };
 
-#endif // DAP_HW_RP2040_GPIO_H
+#endif // DAP_HW_GPIO_H

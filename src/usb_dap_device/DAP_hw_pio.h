@@ -10,8 +10,8 @@
 // a PIO program for increased performance. See
 // DAP_hw_interface.h for more information.
 //
-#ifndef DAP_HW_RP2040_PIO_H
-#define DAP_HW_RP2040_PIO_H
+#ifndef DAP_HW_PIO_H
+#define DAP_HW_PIO_H
 
 #include <cassert>
 #include "config.h"
@@ -20,10 +20,10 @@
 #include "dap_control.pio.h"
 #include "task.h"
 
-class DAP_hw_rp2040_pio : public DAP_hw_interface {
+class DAP_hw_pio : public DAP_hw_interface {
 public:
 
-    explicit DAP_hw_rp2040_pio()
+    explicit DAP_hw_pio()
     : _swdio_tms(GPIO_SWDIO_TMS), _swclk_tck(GPIO_SWCLK_TCK),
       _tdi(GPIO_TDI), _tdo(GPIO_TDO), _reset(GPIO_RESET) {
         // Load PIO program for low level DAP control
@@ -243,4 +243,4 @@ private:
     swd_cmd_t   _cmd;
 };
 
-#endif // DAP_HW_RP2040_PIO_H
+#endif // DAP_HW_PIO_H

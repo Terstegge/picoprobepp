@@ -21,7 +21,6 @@
 #include "usb_fifo.h"
 
 #include "DAP_protocol.h"
-
 #include "task.h"
 
 class usb_dap_device : public task {
