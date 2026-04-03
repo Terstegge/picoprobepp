@@ -89,7 +89,7 @@ public:
             _red   = (bool)(i % 2);
             _green = (bool)(i % 2);
             _blue  = (bool)(i % 2);
-            task::sleep_ms(100);
+            task::sleep_ms(200);
         }
     }
 

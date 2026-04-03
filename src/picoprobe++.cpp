@@ -48,7 +48,7 @@ int main() {
 
     // Logging control for USB and DAP code
     usb_log::inst.setLevel(usb_log::LOG_INFO);
-    DAP_log::inst.setLevel(DAP_log::log_level::LOG_INFO);
+    DAP_log::inst.setLevel(DAP_log::LOG_INFO);
 
     // Set up USB Device driver, USB device and
     // generic device controller on top
@@ -119,7 +119,7 @@ int main() {
     usb_ms_compatible_ID compat_id(ms_func_subset);
     compat_id.set_compatible_id( "WINUSB" );
 
-    // This GUID specifies CMSIS-DAP v2 interfaces
+    // This GUID specifies a CMSIS-DAP v2 interfaces
     usb_ms_registry_property reg_prop(ms_func_subset);
     reg_prop.set_wPropertyDataType(REG_MULTI_SZ);
     reg_prop.add_string( "DeviceInterfaceGUIDs" );

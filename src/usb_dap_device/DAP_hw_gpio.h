@@ -13,14 +13,9 @@
 #define DAP_HW_GPIO_H
 
 #include "config.h"
-#include "gpio_rp2040.h"
-#include "system_rp2040.h"
 #include "task.h"
-#include "RP2040.h"
 #include "DAP_hw_interface.h"
 #include "DAP_log.h"
-
-#include <cstdio>
 
 class DAP_hw_gpio : public DAP_hw_interface {
 public:
@@ -48,14 +43,13 @@ public:
     }
 
     inline constexpr bool test_domain_timer_support() override {
-        // No domain timer so far ...
-        return false;
+        return true;
     }
     inline uint32_t test_domain_timer_frequency() override {
-        return 0;
+        return 1000000;
     }
     inline uint32_t test_domain_timer_get() override {
-        return 0;
+        return task::micros();
     }
 
     ////////////////////////////
@@ -66,10 +60,10 @@ public:
     // (TCK, TMS, TDI, TDO and optionally nTRST and nRESET)
     void connect_jtag_pins() override {
         DAP_LOG(DAP_log::LOG_DEBUG, "connect_jtag_pins()");
-        _swclk_tck.gpioMode(GPIO::OUTPUT);
-        _swdio_tms.gpioMode(GPIO::OUTPUT < GPIO::INIT_LOW);
-        _reset.gpioMode    (GPIO::OUTPUT | GPIO::INIT_HIGH);
-        _tdi.gpioMode      (GPIO::OUTPUT);
+        _swclk_tck.gpioMode(GPIO::INPUT | GPIO::OUTPUT);
+        _swdio_tms.gpioMode(GPIO::INPUT | GPIO::OUTPUT);
+        _reset.gpioMode    (GPIO::INPUT | GPIO::OUTPUT | GPIO::INIT_HIGH);
+        _tdi.gpioMode      (GPIO::INPUT | GPIO::OUTPUT);
         _tdo.gpioMode      (GPIO::INPUT);
     }
 
@@ -77,9 +71,9 @@ public:
     // (SWCLK, SWDIO and optionally nRESET)
     void connect_swd_pins() override {
         DAP_LOG(DAP_log::LOG_DEBUG, "connect_swd_pins()");
-        _swclk_tck.gpioMode(GPIO::OUTPUT);
-        _swdio_tms.gpioMode(GPIO::OUTPUT);
-        _reset.gpioMode    (GPIO::OUTPUT | GPIO::INIT_HIGH);
+        _swclk_tck.gpioMode(GPIO::INPUT | GPIO::OUTPUT);
+        _swdio_tms.gpioMode(GPIO::INPUT | GPIO::OUTPUT);
+        _reset.gpioMode    (GPIO::INPUT | GPIO::OUTPUT | GPIO::INIT_HIGH);
     }
 
     // De-configure all SWD/JTAG Pins and put them
@@ -269,12 +263,12 @@ public:
     }
 
 private:
-    gpio_rp2040 _swdio_tms;
-    gpio_rp2040 _swclk_tck;
+    gpio_rp2xxx _swdio_tms;
+    gpio_rp2xxx _swclk_tck;
 
-    gpio_rp2040 _reset;
-    gpio_rp2040 _tdi;
-    gpio_rp2040 _tdo;
+    gpio_rp2xxx _reset;
+    gpio_rp2xxx _tdi;
+    gpio_rp2xxx _tdo;
 
     uint32_t    _frequency {0};
 };

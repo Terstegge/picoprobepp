@@ -8,8 +8,8 @@
 //
 // Debugger configuration file
 //
-#ifndef CONFIG_RP2350_LAUNCHPAD_H
-#define CONFIG_RP2350_LAUNCHPAD_H
+#ifndef CONFIG_RP2040_LAUNCHPAD_H
+#define CONFIG_RP2040_LAUNCHPAD_H
 
 #include "usb_config.h"
 
@@ -21,17 +21,17 @@
 #define DEBUG_UART_ENABLE                       // Enable debug output via UART
 #define DEBUG_UART_TX_GPIO          BC_UART_TX
 #define DEBUG_UART_RX_GPIO          BC_UART_RX
-//#define DEBUG_USB_UART_ENABLE                   // Enable debug output via separate CDC ACM device
-//#define START_TASK_MONITOR                      // Start the task monitor
+// #define DEBUG_USB_UART_ENABLE                   // Enable debug output via separate CDC ACM device
+// #define START_TASK_MONITOR                      // Start the task monitor
 
 // USB device configuration
 #define USB_DEV_bcdUSB              0x210       // USB version in BCD
 #define USB_DEV_bMaxPacketSize0     TUPP_DEFAULT_PAKET_SIZE
 #define USB_DEV_VID                 0x2e8a      // Raspberry Pi (Trading) Limited
-#define USB_DEV_PID                 0x1089      // RP2040 Lauchpad (see https://github.com/raspberrypi/usb-pid)
-#define USB_DEV_Manufacturer        "FH Aachen"
-#define USB_DEV_Product             "RP2xxx Lauchpad Debug Probe (CMSIS-DAP)"
-#define USB_DEV_bcdDevice           0x0100      // Product version
+#define USB_DEV_PID                 0x000c      // Raspberry Pi Debug Probe
+#define USB_DEV_Manufacturer        "Raspberry Pi"
+#define USB_DEV_Product             "Pico2 Debug Probe (CMSIS-DAP)"
+#define USB_DEV_bcdDevice           0x0230      // Product version
 
 // CMSIS DAP configuration
 #define DAP_PROTOCOL_VERSION        "2.1.1"
@@ -45,10 +45,10 @@
 
 // Device/Board information if debug probe is fixed to a dev board.
 // Use empty strings if the chip device and board are not know.
-#define DAP_DEVICE_VENDOR           "Raspberry Pi"
-#define DAP_DEVICE_NAME             "RP2350"
-#define DAP_BOARD_VENDOR            "FH Aachen"
-#define DAP_BOARD_NAME              "RP2350 Launchpad"
+#define DAP_DEVICE_VENDOR           ""
+#define DAP_DEVICE_NAME             ""
+#define DAP_BOARD_VENDOR            ""
+#define DAP_BOARD_NAME              ""
 
 // Maximum Package Buffers for Command and Response data.
 // This configuration settings is used to optimize the communication
@@ -84,15 +84,15 @@
 #define JTAG_IR_LENGTH              4
 
 // SWD/JTAG Hardware configuration
-#define GPIO_SWCLK_TCK              16
-#define GPIO_SWDIO_TMS              15
-#define GPIO_RESET                  20
-#define GPIO_TDI                    21
-#define GPIO_TDO                    22
+#define GPIO_SWCLK_TCK              2
+#define GPIO_SWDIO_TMS              3
+#define GPIO_RESET                  6
+#define GPIO_TDI                    7
+#define GPIO_TDO                    8
 
-// USB UART configuration (has to be UART0!)
-#define UART_TARGET_TX_GPIO         12           // probe to target
-#define UART_TARGET_RX_GPIO         13           // target to probe
+// USB UART configuration
+#define UART_TARGET_TX_GPIO         4           // probe to target
+#define UART_TARGET_RX_GPIO         5           // target to probe
 #define UART_TARGET_BUFFER_SIZE     1024
 
-#endif // CONFIG_RP2350_LAUNCHPAD_H
+#endif // CONFIG_RP2040_LAUNCHPAD_H

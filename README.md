@@ -6,8 +6,8 @@ picoprobe++ is a CMSIS DAP v2.0 compatible debugger firmware written in C++.
 It has most of the features and at least the performance of the original
 Raspberry Pi [debugprobe](https://github.com/raspberrypi/debugprobe) software,
 so it can be used as a replaycement if needed. picoprobe++ is not using the
-Raspberry Pi pico SDK, tinyusb or the ARM CMSIS DAP implementation. Instead,
-it is based on the following components:
+Raspberry Pi pico SDK, tinyusb, FreeRTOS or the ARM CMSIS DAP implementation.
+Instead, it is based on the following components:
 
 * [YAHAL RTOS](https://git.fh-aachen.de/yahal/YAHAL),
   an embedded operating system written in C++, supporting ARM and ESP MCUs
@@ -82,6 +82,8 @@ itself contains submodules like openDAP++ or tinyUSB++:
 
 `git clone https://github.com/Terstegge/picoprobepp.git --recursive`
 
+You might want to rename the cloned folder from `picoprobepp` to its propper name `picoprobe++`
+(special characters like `+` are not allowed in github project names).
 Then proceed with the typical cmake build steps:
 
 `mkdir BUILD;   cd BUILD;   cmake ..;   make -j 5`

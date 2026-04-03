@@ -27,7 +27,7 @@ public:
     : _swdio_tms(GPIO_SWDIO_TMS), _swclk_tck(GPIO_SWCLK_TCK),
       _tdi(GPIO_TDI), _tdo(GPIO_TDO), _reset(GPIO_RESET) {
         // Load PIO program for low level DAP control
-        _pio_dap = pio_rp2xxx::pio0.loadProgram(dap_control_program);
+        _pio_dap = pio_rp2xxx::pio1.loadProgram(dap_control_program);
     }
 
     ///////////////////////////////
@@ -43,14 +43,13 @@ public:
     }
 
     constexpr bool test_domain_timer_support() override {
-        // No domain timer so far ...
-        return false;
+        return true;
     }
     inline uint32_t test_domain_timer_frequency() override {
-        return 0;
+        return 1000000;
     }
     inline uint32_t test_domain_timer_get() override {
-        return 0;
+        return task::micros();
     }
 
     ////////////////////////////
@@ -59,16 +58,16 @@ public:
 
     void connect_jtag_pins() override {
         DAP_LOG(DAP_log::LOG_INFO, "connect_jtag_pins()");
-        _swdio_tms.gpioMode(GPIO::OUTPUT | GPIO::FAST | GPIO::DRIVE_4mA | GPIO::INIT_LOW);
-        _swclk_tck.gpioMode(GPIO::OUTPUT | GPIO::FAST | GPIO::DRIVE_4mA);
-        _tdi.gpioMode      (GPIO::OUTPUT | GPIO::FAST | GPIO::DRIVE_4mA);
+        _swdio_tms.gpioMode(GPIO::INPUT | GPIO::OUTPUT | GPIO::FAST | GPIO::INIT_LOW);
+        _swclk_tck.gpioMode(GPIO::INPUT | GPIO::OUTPUT | GPIO::FAST);
+        _tdi.gpioMode      (GPIO::INPUT | GPIO::OUTPUT | GPIO::FAST);
         _tdo.gpioMode      (GPIO::INPUT);
-        _reset.gpioMode    (GPIO::OUTPUT | GPIO::INIT_HIGH);
+        _reset.gpioMode    (GPIO::INPUT | GPIO::OUTPUT | GPIO::INIT_HIGH);
 
-        _swdio_tms.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio0);
-        _swclk_tck.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio0);
-        _tdi.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio0);
-        _tdo.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio0);
+        _swdio_tms.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
+        _swclk_tck.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
+        _tdi.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
+        _tdo.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
 
         _pio_dap->disable();
         configure_JTAG(_pio_dap, GPIO_SWDIO_TMS, GPIO_SWCLK_TCK, GPIO_TDI, GPIO_TDO);
@@ -77,11 +76,11 @@ public:
 
     void connect_swd_pins() override {
         DAP_LOG(DAP_log::LOG_INFO, "connect_swd_pins()");
-        _swclk_tck.gpioMode(GPIO::OUTPUT | GPIO::FAST | GPIO::DRIVE_4mA);
-        _swdio_tms.gpioMode(GPIO::OUTPUT | GPIO::FAST | GPIO::DRIVE_4mA);
+        _swclk_tck.gpioMode(GPIO::INPUT | GPIO::OUTPUT | GPIO::FAST);
+        _swdio_tms.gpioMode(GPIO::INPUT | GPIO::OUTPUT | GPIO::FAST);
 
-        _swclk_tck.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio0);
-        _swdio_tms.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio0);
+        _swclk_tck.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
+        _swdio_tms.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
 
         _pio_dap->disable();
         configure_SWD(_pio_dap, GPIO_SWDIO_TMS, GPIO_SWCLK_TCK);
@@ -107,8 +106,8 @@ public:
 
     inline void clock_cycle(uint16_t len) override {
         if (len == 0) return;
-        _cmd.len    = len-1; // PIO code expects len-1
-        _cmd.cmd    = dap_control_offset_cycle + _pio_dap->load_addr;
+        _cmd.len = len-1; // PIO code expects len-1
+        _cmd.cmd = dap_control_offset_cycle + _pio_dap->load_addr;
         _pio_dap->writeTxFifo(_cmd.value);
     }
 
@@ -118,8 +117,8 @@ public:
 
     inline uint32_t swd_read(uint8_t len) override {
         swd_swdio_enable_output(false);
-        _cmd.len    = len-1; // PIO code expects len-1
-        _cmd.cmd    = dap_control_offset_read + _pio_dap->load_addr;
+        _cmd.len = len-1; // PIO code expects len-1
+        _cmd.cmd = dap_control_offset_read + _pio_dap->load_addr;
         _pio_dap->writeTxFifo(_cmd.value);
         uint32_t res = _pio_dap->readRxFifo();
         res >>= (32-len);
@@ -128,8 +127,8 @@ public:
 
     inline void swd_write(uint32_t val, uint8_t len) override {
         swd_swdio_enable_output(true);
-        _cmd.len    = len-1; // PIO code expects len-1
-        _cmd.cmd    = dap_control_offset_write + _pio_dap->load_addr;
+        _cmd.len = len-1; // PIO code expects len-1
+        _cmd.cmd = dap_control_offset_write + _pio_dap->load_addr;
         _pio_dap->writeTxFifo(_cmd.value);
         _pio_dap->writeTxFifo(val);
     }
@@ -150,8 +149,8 @@ public:
     //////////////////////////
 
     inline uint32_t jtag_read(uint8_t len) override {
-        _cmd.len    = len-1; // PIO code expects len-1
-        _cmd.cmd    = dap_control_offset_read + _pio_dap->load_addr;
+        _cmd.len = len-1; // PIO code expects len-1
+        _cmd.cmd = dap_control_offset_read + _pio_dap->load_addr;
         _pio_dap->writeTxFifo(_cmd.value);
         uint32_t res = _pio_dap->readRxFifo();
         res >>= (32-len);
@@ -159,16 +158,16 @@ public:
     }
 
     inline uint32_t jtag_write(uint32_t val, uint8_t len) override {
-        _cmd.len    = len-1; // PIO code expects len-1
-        _cmd.cmd    = dap_control_offset_write + _pio_dap->load_addr;
+        _cmd.len = len-1; // PIO code expects len-1
+        _cmd.cmd = dap_control_offset_write + _pio_dap->load_addr;
         _pio_dap->writeTxFifo(_cmd.value);
         _pio_dap->writeTxFifo(val);
         return val >> len;
     }
 
     inline uint32_t jtag_read_write(uint32_t val, uint8_t len) override {
-        _cmd.len    = len-1; // PIO code expects len-1
-        _cmd.cmd    = dap_control_offset_read_write + _pio_dap->load_addr;
+        _cmd.len = len-1; // PIO code expects len-1
+        _cmd.cmd = dap_control_offset_read_write + _pio_dap->load_addr;
         _pio_dap->writeTxFifo(_cmd.value);
         _pio_dap->writeTxFifo(val);
         uint32_t res = _pio_dap->readRxFifo();
