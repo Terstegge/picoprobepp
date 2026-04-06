@@ -87,6 +87,7 @@ int main() {
     DAP_Protocol dap(dap_hw);
     dap.set_serial(id.data());
     usb_dap_device dap_device(controller, config, dap);
+    bc_uart_device.setPriority(100);
     dap_device.sign_up();
 
     // Set up CDC ACM device to target. Create a HW UART object
@@ -94,8 +95,8 @@ int main() {
     uart_rp2xxx target_uart(UART_TARGET_TX_GPIO, UART_TARGET_RX_GPIO);
     usb_uart_device bc_uart_device(controller, config, target_uart);
     bc_uart_device.set_FunctionName("Target debug UART");
-    bc_uart_device.sign_up();
     bc_uart_device.setPriority(90);
+    bc_uart_device.sign_up();
 
     #ifdef DEBUG_USB_UART_ENABLE
     // Set up another CDC ACM device for debugging the debugger firmware.

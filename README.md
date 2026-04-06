@@ -5,7 +5,7 @@
 picoprobe++ is a CMSIS DAP v2.0 compatible debugger firmware written in C++.
 It has most of the features and at least the performance of the original
 Raspberry Pi [debugprobe](https://github.com/raspberrypi/debugprobe) software,
-so it can be used as a replaycement if needed. picoprobe++ is not using the
+so it can be used as a replacement if needed. picoprobe++ is not using the
 Raspberry Pi pico SDK, tinyusb, FreeRTOS or the ARM CMSIS DAP implementation.
 Instead, it is based on the following components:
 
@@ -20,11 +20,10 @@ picoprobe++ benefits from the features of the libraries it uses.
 
 * picoprobe++ uses the YAHAL preemptive multitasking, which simplifies the overall
   software structure. There are separate tasks for the CDC ACM UART device and the
-  CMSIS-DAP interface (which uses the highest priority). Implementation of tasks
-  is using a Java-style syntax - overriding a virtual run() method, which is very
-  easy to read and understand. Optionally, the YAHAL task monitor can be enabled
-  in the picoprobe++ configuration file, which shows all important task statistics
-  in the debug console every 5 seconds.
+  CMSIS-DAP interface. Implementation of tasks is using a Java-style syntax - overriding
+  a virtual run() method, which is very easy to read and understand.
+  Optionally, the YAHAL task monitor can be enabled in the picoprobe++ configuration file,
+  which shows all important task statistics in the debug console every 5 seconds.
 * All needed USB descriptors in picoprobe++ are set up during runtime, which is
   a nice feature of tinyUSB++. So e.g. adding a second CDC ACM device for firmware
   debugging purposes is only 2 lines of code. tinyUSB++ also has full support for
@@ -40,8 +39,6 @@ picoprobe++ benefits from the features of the libraries it uses.
   This results in a better software structure, clearly separating the generic code from the
   code which varies depending on the specific MCU or board. This also facilitates porting to
   new MCUs or platforms.
-   
-  
 
 ---
 ### Configuration
@@ -122,6 +119,5 @@ picoprobe software, we were never able to get this to work. It might be a contro
 or a general UART performance issue. With picoprobe++, this functionality is working now without
 any problems.
 
-Last but not least, it serves as a great example project for the YAHAL RTOS, combining various
-technologies such as USB and CMSIS DAP. And of course it was great fun to realize it.
-
+Last but not least, it serves as a good example project for the YAHAL RTOS, combining various
+technologies such as USB and CMSIS DAP.

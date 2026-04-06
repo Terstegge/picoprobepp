@@ -22,17 +22,19 @@ target_compile_options(picoprobe++
 # Add YAHAL
 yahal_add_me(picoprobe++)
 
-# Set YAHAL system clock to 200MHz
+# Set YAHAL system clock to 200MHz for RP2040
+if (YAHAL_BOARD STREQUAL "rp2040-launchpad")
 target_compile_definitions(YAHAL_picoprobe++
         PRIVATE SYS_CLK_FREQ=200
 )
+endif()
 
 # Optimize YAHAL for speed
 target_compile_options(YAHAL_picoprobe++
         PRIVATE -Ofast
 )
 
-# Add WS2812 driver if we use the RP2040 Lauchpad
+# Add WS2812 driver if we use a RP2xxx Launchpad
 if (YAHAL_BOARD STREQUAL "rp2040-launchpad")
 yahal_add_driver(picoprobe++ rp2040/ws2812)
 endif()
