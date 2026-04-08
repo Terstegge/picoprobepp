@@ -87,7 +87,7 @@ int main() {
     DAP_Protocol dap(dap_hw);
     dap.set_serial(id.data());
     usb_dap_device dap_device(controller, config, dap);
-    bc_uart_device.setPriority(100);
+    dap_device.setPriority(100);
     dap_device.sign_up();
 
     // Set up CDC ACM device to target. Create a HW UART object
@@ -106,7 +106,7 @@ int main() {
     posix_io::inst.register_stdio(usb_uart_adapter);
     #endif
 
-    // Add BOS and MS OS 2.0 descriptor
+    // Add BOS and MS OS 2.0 capability
     usb_bos bos(controller, device); // Add a Binary Object Store
     usb_ms_OS_20_capability ms_os20(bos);
 
