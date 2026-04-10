@@ -37,29 +37,51 @@ picoprobe++ benefits from the features of the libraries it uses.
   This could be important in cases where the PIO modules are already used for someting else.
 * picoprobe++ and the libraries it uses try to use abstract C++ interfaces at various places.
   This results in a better software structure, clearly separating the generic code from the
-  code which varies depending on the specific MCU or board. This also facilitates porting to
-  new MCUs or platforms.
+  code which varies depending on the specific MCU or board. This also facilitates porting
+  this software to new MCUs or platforms.
 
 ---
 ### Configuration
 
-* Select board in CMake file
-* modify config file
-* LED file / class
-* tbd
+Configuration of picoprobe++ starts in `CMakeLists.txt`. At the beginning of
+this file you can comment out one of the currently supported board types.
+For every board type, there is a matching configuration file in folder
+`config`. Also the LED driver is depending on the board type - see
+`config/config.h` for details. In the board-specific config files, there
+are configuration sections for the following items:
 
----
-### Debugging the firmware
+* _Firmware_debugging_ - There are two options to see the debug output of
+  picoprobe++: Either with a UART interface (default). Make sure that the
+  UART for debugging does not interfere with the UART used for communication
+  with the target. The other option is to create a second CDC ACM device,
+  which will show up on the host PC. In this case, you will not be able to
+  see the debug output before creation of the CDC ACM interface. The USB
+  and DAP log levels can be set individually. Optionally, you can start
+  the YAHAL task monitor to see the task statistics.
 
-* Using UART
-* Using additionl CDC ACM device
-* log levels
-* tbd
+* _USB_configuration_ - Typical USB device values like VID/PID and others.
+
+* _DAP_configuration_ - Various settings for the DAP interface, including
+  several string constants and booleans definiing the support of DAP
+  features.
+
+* _GPIO_configuration_ - The Pins to be used for the JTAG/SWD signals as
+  well as the Pins to be used for the UART to communicate with the target.
+
+The specific LED driver classes contain the HW definitions / GPIO pins to
+be used for the LEDs.
 
 ---
 ### Openocd and the running LED
-
-
+Openocd does not really care about the DAP 'running' state, meaning it does
+not emit commands to switch on/off the corresponding LED on a debug probe.
+The folder `openocd` contains two Openocd board configuration files for the
+RP2040 and the RP2350, which 'manually' control the running state based on
+Openocd events. Try out these files if the 'running' LED should work on your
+debug probe. It might be that the 'running' state is accidentally set after
+the first connect to the target board. The picoprobe++ LED handler classes
+take this into account, and suppress the first setting of the 'running'
+state!
 
 ---
 ### Installation

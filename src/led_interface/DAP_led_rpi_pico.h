@@ -6,8 +6,8 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Implementation of LEDs for the RPi Pico. There is only one
-// green LED available, so UART activity is not shown.
+// Implementation of LEDs for the RPi Pico and Pico2. There is
+// only one green LED available, so UART activity is not shown.
 //
 #ifndef DAP_LED_RPI_PICO_H
 #define DAP_LED_RPI_PICO_H

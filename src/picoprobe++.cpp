@@ -47,8 +47,8 @@ int main() {
     #endif
 
     // Logging control for USB and DAP code
-    usb_log::inst.setLevel(usb_log::LOG_INFO);
-    DAP_log::inst.setLevel(DAP_log::LOG_INFO);
+    usb_log::inst.setLevel(usb_log::DEBUG_LEVEL_USB);
+    DAP_log::inst.setLevel(DAP_log::DEBUG_LEVEL_DAP);
 
     // Set up USB Device driver, USB device and
     // generic device controller on top
@@ -106,7 +106,7 @@ int main() {
     posix_io::inst.register_stdio(usb_uart_adapter);
     #endif
 
-    // Add BOS and MS OS 2.0 capability
+    // Add BOS and MS OS 2.0 capability descriptor
     usb_bos bos(controller, device); // Add a Binary Object Store
     usb_ms_OS_20_capability ms_os20(bos);
 

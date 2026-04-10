@@ -6,23 +6,31 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Debugger configuration file
+// Debugger configuration file for the RPi Pico
 //
 #ifndef CONFIG_RP2040_LAUNCHPAD_H
 #define CONFIG_RP2040_LAUNCHPAD_H
 
 #include "usb_config.h"
 
-// Definition needed for openDAP++
-#define USB_DEFAULT_PAKET_SIZE      TUPP_DEFAULT_PAKET_SIZE
+////////////////////////////////
+// Firmware Debugging Options //
+////////////////////////////////
 
-// Debugging Options
-// (output from the debug application, NOT the target!)
 #define DEBUG_UART_ENABLE                       // Enable debug output via UART
 #define DEBUG_UART_TX_GPIO          BC_UART_TX
 #define DEBUG_UART_RX_GPIO          BC_UART_RX
 // #define DEBUG_USB_UART_ENABLE                   // Enable debug output via separate CDC ACM device
+#define DEBUG_LEVEL_USB		    LOG_INFO
+#define DEBUG_LEVEL_DAP             LOG_INFO
 // #define START_TASK_MONITOR                      // Start the task monitor
+
+///////////////////////
+// USB configuration //
+///////////////////////
+
+// Definition needed for openDAP++
+#define USB_DEFAULT_PAKET_SIZE      TUPP_DEFAULT_PAKET_SIZE
 
 // USB device configuration
 #define USB_DEV_bcdUSB              0x210       // USB version in BCD
@@ -32,6 +40,10 @@
 #define USB_DEV_Manufacturer        "Raspberry Pi"
 #define USB_DEV_Product             "Pico Debug Probe (CMSIS-DAP)"
 #define USB_DEV_bcdDevice           0x0230      // Product version
+
+///////////////////////
+// DAP configuration //
+///////////////////////
 
 // CMSIS DAP configuration
 #define DAP_PROTOCOL_VERSION        "2.1.1"
@@ -82,6 +94,10 @@
 
 #define JTAG_DEV_COUNT              8
 #define JTAG_IR_LENGTH              4
+
+////////////////////////
+// GPIO configuration //
+////////////////////////
 
 // SWD/JTAG Hardware configuration
 #define GPIO_SWCLK_TCK              2

@@ -6,23 +6,31 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Debugger configuration file
+// Debugger configuration file for the RP2350 Launchpad
 //
 #ifndef CONFIG_RP2350_LAUNCHPAD_H
 #define CONFIG_RP2350_LAUNCHPAD_H
 
 #include "usb_config.h"
 
-// Definition needed for openDAP++
-#define USB_DEFAULT_PAKET_SIZE      TUPP_DEFAULT_PAKET_SIZE
+////////////////////////////////
+// Firmware Debugging Options //
+////////////////////////////////
 
-// Debugging Options
-// (output from the debug application, NOT the target!)
 #define DEBUG_UART_ENABLE                       // Enable debug output via UART
 #define DEBUG_UART_TX_GPIO          BC_UART_TX
 #define DEBUG_UART_RX_GPIO          BC_UART_RX
 //#define DEBUG_USB_UART_ENABLE                   // Enable debug output via separate CDC ACM device
+#define DEBUG_LEVEL_USB		    LOG_INFO
+#define DEBUG_LEVEL_DAP             LOG_INFO
 //#define START_TASK_MONITOR                      // Start the task monitor
+
+///////////////////////
+// USB configuration //
+///////////////////////
+
+// Definition needed for openDAP++
+#define USB_DEFAULT_PAKET_SIZE      TUPP_DEFAULT_PAKET_SIZE
 
 // USB device configuration
 #define USB_DEV_bcdUSB              0x210       // USB version in BCD
@@ -32,6 +40,10 @@
 #define USB_DEV_Manufacturer        "FH Aachen"
 #define USB_DEV_Product             "RP2xxx Lauchpad Debug Probe (CMSIS-DAP)"
 #define USB_DEV_bcdDevice           0x0100      // Product version
+
+///////////////////////
+// DAP configuration //
+///////////////////////
 
 // CMSIS DAP configuration
 #define DAP_PROTOCOL_VERSION        "2.1.1"
@@ -45,6 +57,7 @@
 
 // Device/Board information if debug probe is fixed to a dev board.
 // Use empty strings if the chip device and board are not know.
+// This configuration assumes a RP2350 Launchpad...
 #define DAP_DEVICE_VENDOR           "Raspberry Pi"
 #define DAP_DEVICE_NAME             "RP2350"
 #define DAP_BOARD_VENDOR            "FH Aachen"
@@ -83,6 +96,10 @@
 #define JTAG_DEV_COUNT              8
 #define JTAG_IR_LENGTH              4
 
+////////////////////////
+// GPIO configuration //
+////////////////////////
+
 // SWD/JTAG Hardware configuration
 #define GPIO_SWCLK_TCK              16
 #define GPIO_SWDIO_TMS              15
@@ -96,3 +113,4 @@
 #define UART_TARGET_BUFFER_SIZE     1024
 
 #endif // CONFIG_RP2350_LAUNCHPAD_H
+

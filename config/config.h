@@ -45,12 +45,6 @@
 #include "RP2350.h"
 #endif
 
-#ifdef YAHAL_BOARD_RP2xxx_LAUNCHPAD_PROBE
-#include "config_rp2xxx_launchpad_probe.h"
-#include "DAP_led_rp2xxx_launchpad_probe.h"
-#define DAP_led DAP_led_rp2xxx_launchpad_probe
-#endif
-
 #ifdef YAHAL_BOARD_RPI_PICO
 #include "config_rpi_pico.h"
 #include "DAP_led_rpi_pico.h"
@@ -73,6 +67,12 @@
 #include "config_rp2350_launchpad.h"
 #include "DAP_led_rp2350_launchpad.h"
 #define DAP_led DAP_led_rp2350_launchpad
+#endif
+
+#ifdef YAHAL_BOARD_RP2xxx_LAUNCHPAD_PROBE
+#include "config_rp2xxx_launchpad_probe.h"
+#include "DAP_led_rp2xxx_launchpad_probe.h"
+#define DAP_led DAP_led_rp2xxx_launchpad_probe
 #endif
 
 #endif // BOARD_INCLUDES_H
