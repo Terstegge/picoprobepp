@@ -40,15 +40,15 @@ int main() {
     // Get the unique ID of this MCU/board
     auto id = unique_id_rp2xxx::read_unique_id_string();
 
+    // Logging control for USB and DAP code
+    usb_log::inst.setLevel(usb_log::DEBUG_LEVEL_USB);
+    DAP_log::inst.setLevel(DAP_log::DEBUG_LEVEL_DAP);
+
     #ifdef DEBUG_UART_ENABLE
     // Firmware Debug UART
     uart_rp2xxx uart(DEBUG_UART_TX_GPIO, DEBUG_UART_RX_GPIO);
     posix_io::inst.register_stdio(uart);
     #endif
-
-    // Logging control for USB and DAP code
-    usb_log::inst.setLevel(usb_log::DEBUG_LEVEL_USB);
-    DAP_log::inst.setLevel(DAP_log::DEBUG_LEVEL_DAP);
 
     // Set up USB Device driver, USB device and
     // generic device controller on top
