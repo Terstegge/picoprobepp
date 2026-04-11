@@ -44,13 +44,14 @@ picoprobe++ benefits from the features of the libraries it uses.
 ### Configuration
 
 Configuration of picoprobe++ starts in `CMakeLists.txt`. At the beginning of
-this file you can comment out one of the currently supported board types.
+this file you can comment out one of the currently supported board types
+(pico, pico2, rp2040-launchpad, rp2350-launchpad, rp2xxx-launchpad-probe).
 For every board type, there is a matching configuration file in folder
 `config`. Also the LED driver is depending on the board type - see
 `config/config.h` for details. In the board-specific config files, there
 are configuration sections for the following items:
 
-* _Firmware_debugging_ - There are two options to see the debug output of
+* **Firmware debugging** - There are two options to see the debug output of
   picoprobe++: Either with a UART interface (default). Make sure that the
   UART for debugging does not interfere with the UART used for communication
   with the target. The other option is to create a second CDC ACM device,
@@ -59,13 +60,13 @@ are configuration sections for the following items:
   and DAP log levels can be set individually. Optionally, you can start
   the YAHAL task monitor to see the task statistics.
 
-* _USB_configuration_ - Typical USB device values like VID/PID and others.
+* **USB configuration** - Typical USB device values like VID/PID and others.
 
-* _DAP_configuration_ - Various settings for the DAP interface, including
+* **DAP configuration** - Various settings for the DAP interface, including
   several string constants and booleans definiing the support of DAP
   features.
 
-* _GPIO_configuration_ - The Pins to be used for the JTAG/SWD signals as
+* **GPIO configuration** - The Pins to be used for the JTAG/SWD signals as
   well as the Pins to be used for the UART to communicate with the target.
 
 The specific LED driver classes contain the HW definitions / GPIO pins to
@@ -88,7 +89,7 @@ state!
 To compile and install this Software, you need
 * an installed [ARM GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads),
   (the arm-none-eabi variant)
-* cmake
+* git and cmake
 * a RP2040 or RP2350 based board, e.g. any kind of
  [Raspberry Pi Pico](https://www.raspberrypi.com/documentation/microcontrollers/pico-series.html) or a
  [Raspberry Pi Debug Probe](https://www.raspberrypi.com/documentation/microcontrollers/debug-probe.html),

@@ -26,6 +26,13 @@ public:
         DAP_LOG(DAP_log::LOG_DEBUG, "DAP_hw_gpio()");
     }
 
+    inline void cycle_swclk_tck() {
+        swclk_tck_set(true);
+        delay_edge();
+        swclk_tck_set(false);
+        delay_edge();
+    }
+
     ///////////////////////////////
     // Timing configuration methods
     ///////////////////////////////
@@ -99,10 +106,7 @@ public:
     inline void clock_cycle(uint16_t cycles) override {
         DAP_LOG(DAP_log::LOG_DEBUG, "swclk_cycle(%d)", cycles);
         while (cycles--) {
-            swclk_tck_set(true);
-            delay_edge();
-            swclk_tck_set(false);
-            delay_edge();
+            cycle_swclk_tck();
         }
     }
 
@@ -119,10 +123,7 @@ public:
             bit = swdio_tms_get();
             value |= (bit << i);
             // Clock cycle
-            swclk_tck_set(true);
-            delay_edge();
-            swclk_tck_set(false);
-            delay_edge();
+            cycle_swclk_tck();
         }
         return value;
     }
@@ -134,10 +135,7 @@ public:
             swdio_tms_set(value & 1);
             value >>= 1;
             // Clock cycle
-            swclk_tck_set(true);
-            delay_edge();
-            swclk_tck_set(false);
-            delay_edge();
+            cycle_swclk_tck();
         }
     }
 
@@ -158,10 +156,7 @@ public:
             bit = tdo_get();
             value |= (bit << i);
             // Clock cycle
-            swclk_tck_set(true);
-            delay_edge();
-            swclk_tck_set(false);
-            delay_edge();
+            cycle_swclk_tck();
         }
         return value;
     }
@@ -172,10 +167,7 @@ public:
             tdi_set(value & 1);
             value >>= 1;
             // Clock cycle
-            swclk_tck_set(true);
-            delay_edge();
-            swclk_tck_set(false);
-            delay_edge();
+            cycle_swclk_tck();
         }
         return value;
     }
@@ -190,10 +182,7 @@ public:
             bit = tdo_get();
             read_value |= (bit << i);
             // Clock cycle
-            swclk_tck_set(true);
-            delay_edge();
-            swclk_tck_set(false);
-            delay_edge();
+            cycle_swclk_tck();
         }
         return read_value;
     }
