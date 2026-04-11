@@ -18,8 +18,8 @@
 ////////////////////////////////
 
 #define DEBUG_UART_ENABLE                       // Enable debug output via UART
-#define DEBUG_UART_TX_GPIO          BC_UART_TX
-#define DEBUG_UART_RX_GPIO          BC_UART_RX
+#define DEBUG_UART_TX_GPIO          0
+#define DEBUG_UART_RX_GPIO          1
 // #define DEBUG_USB_UART_ENABLE                   // Enable debug output via separate CDC ACM device
 #define DEBUG_LEVEL_USB	            LOG_INFO
 #define DEBUG_LEVEL_DAP             LOG_INFO
