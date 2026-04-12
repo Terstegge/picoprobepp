@@ -23,11 +23,9 @@ target_compile_options(picoprobe++
 yahal_add_me(picoprobe++)
 
 # Set YAHAL system clock to 200MHz for RP2040
-if (YAHAL_BOARD STREQUAL "rp2040-launchpad")
 target_compile_definitions(YAHAL_picoprobe++
         PRIVATE SYS_CLK_FREQ=200
 )
-endif()
 
 # Optimize YAHAL for speed
 target_compile_options(YAHAL_picoprobe++

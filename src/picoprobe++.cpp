@@ -87,20 +87,20 @@ int main() {
     DAP_Protocol dap(dap_hw);
     dap.set_serial(id.data());
     usb_dap_device dap_device(controller, config, dap);
-    dap_device.setPriority(100);
     dap_device.sign_up();
+    dap_device.setPriority(100);
 
     // Set up CDC ACM device to target. Create a HW UART object
     // and forward it to the USB UART device.
     uart_rp2xxx target_uart(UART_TARGET_TX_GPIO, UART_TARGET_RX_GPIO);
     usb_uart_device bc_uart_device(controller, config, target_uart);
     bc_uart_device.set_FunctionName("Target debug UART");
-    bc_uart_device.setPriority(90);
     bc_uart_device.sign_up();
+    bc_uart_device.setPriority(90);
 
+    // Optional: Set up another CDC ACM device for debugging the debugger
+    // firmware (connected to stdio of the debugger SW).
     #ifdef DEBUG_USB_UART_ENABLE
-    // Set up another CDC ACM device for debugging the debugger firmware.
-    // (connected to stdio of the debugger SW)
     usb_cdc_acm_adapter usb_uart_adapter(controller, config);
     usb_uart_adapter.set_FunctionName("Firmware debug UART");
     posix_io::inst.register_stdio(usb_uart_adapter);
@@ -127,16 +127,15 @@ int main() {
     reg_prop.add_string( "{CDB3B5AD-293B-4663-AA36-1AAE46463776}" );
     reg_prop.add_end_marker();
 
-    // LED handler
+    // LED handler - connect USB/DAP callbacks to the LEDs
     DAP_led leds;
-    // Connect USB/DAP callbacks to the LEDs
     usb_uart_device::uart_tx_cb = [&]()       { leds.trigger_uart_tx_led(); };
     usb_uart_device::uart_rx_cb = [&]()       { leds.trigger_uart_rx_led(); };
     DAP_Protocol::connected_cb  = [&](bool v) { leds.set_connected_led(v);  };
     DAP_Protocol::running_cb    = [&](bool v) { leds.set_running_led(v);    };
 
-    #ifdef START_TASK_MONITOR
     // Optional: YAHAL Task Monitor
+    #ifdef START_TASK_MONITOR
     task_monitor monitor;
     monitor.sign_up();
     monitor.setPriority(5);

@@ -53,7 +53,7 @@
 // strings, the USB Device Information is used to obtain these values!
 #define DAP_VENDOR_NAME             USB_DEV_Manufacturer
 #define DAP_PRODUCT_NAME            USB_DEV_Product
-#define DAP_FIRMWARE_VERSION        "1.0"
+#define DAP_FIRMWARE_VERSION        "1.1"
 
 // Device/Board information if debug probe is fixed to a dev board.
 // Use empty strings if the chip device and board are not know.
