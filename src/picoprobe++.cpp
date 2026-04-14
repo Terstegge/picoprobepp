@@ -159,6 +159,6 @@ int main() {
     leds.welcome();
 
     TUPP_LOG(LOG_INFO, "Starting the scheduler ...");
-    // Get the ball rolling by starting the multitasking
+    // Start the multitasking kernel
     task::start_scheduler();
 }

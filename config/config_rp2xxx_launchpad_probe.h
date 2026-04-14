@@ -12,6 +12,7 @@
 #ifndef CONFIG_RP2XXX_LAUNCHPAD_PROBE_H
 #define CONFIG_RP2XXX_LAUNCHPAD_PROBE_H
 
+#include "version.h"
 #include "usb_config.h"
 
 ////////////////////////////////
@@ -40,7 +41,7 @@
 #define USB_DEV_PID                 0x1089      // RP2040 Lauchpad (see https://github.com/raspberrypi/usb-pid)
 #define USB_DEV_Manufacturer        "FH Aachen"
 #define USB_DEV_Product             "RP2xxx Lauchpad Debug Probe (CMSIS-DAP)"
-#define USB_DEV_bcdDevice           0x0100      // Product version
+#define USB_DEV_bcdDevice           VERSION_BCD // Product version
 
 ///////////////////////
 // DAP configuration //
@@ -54,7 +55,7 @@
 // strings, the USB Device Information is used to obtain these values!
 #define DAP_VENDOR_NAME             USB_DEV_Manufacturer
 #define DAP_PRODUCT_NAME            USB_DEV_Product
-#define DAP_FIRMWARE_VERSION        "1.1"
+#define DAP_FIRMWARE_VERSION        VERSION_STRING
 
 // Device/Board information if debug probe is fixed to a dev board.
 // Use empty strings if the chip device and board are not know.

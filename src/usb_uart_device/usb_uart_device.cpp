@@ -9,8 +9,8 @@
 #include <cassert>
 #include "usb_uart_device.h"
 
-// Mark host as inactive after 500ms
-#define HOST_ACTIVE_TIMEOUT_US  5000000
+// Mark host as inactive after 2s
+#define HOST_ACTIVE_TIMEOUT_US  2000000
 
 std::function<void()> usb_uart_device::uart_tx_cb;
 std::function<void()> usb_uart_device::uart_rx_cb;
@@ -118,6 +118,8 @@ void usb_uart_device::run() {
         while (millis() < until) {
             if (available() || _tx_buffer.available_get()) break;
         }
+
+        // Suspend the task if there is nothing to do...
         if (!available() && !_tx_buffer.available_get()) {
             suspend();
             yield();
@@ -142,9 +144,8 @@ void usb_uart_device::run() {
         }
         // Try to read data from UART
         len = _tx_buffer.available_get();
-        // Only forward data to host if host is
-        // active or some application running on
-        // host side (DTR active).
+        // Only forward data to host if host is active or some
+        // application running on host side (DTR active).
         if (len && (_dtr || _host_active)) {
             if (uart_tx_cb) uart_tx_cb();
             for(size_t i=0; i < len; ++i) {

@@ -8,9 +8,10 @@
 //
 // Debugger configuration file for the RPi Pico2
 //
-#ifndef CONFIG_RP2040_LAUNCHPAD_H
-#define CONFIG_RP2040_LAUNCHPAD_H
+#ifndef CONFIG_RPI_PICO2_H
+#define CONFIG_RPI_PICO2_H
 
+#include "version.h"
 #include "usb_config.h"
 
 ////////////////////////////////
@@ -38,8 +39,8 @@
 #define USB_DEV_VID                 0x2e8a      // Raspberry Pi (Trading) Limited
 #define USB_DEV_PID                 0x000c      // Raspberry Pi Debug Probe
 #define USB_DEV_Manufacturer        "Raspberry Pi"
-#define USB_DEV_Product             "Pico2 Debug Probe (CMSIS-DAP)"
-#define USB_DEV_bcdDevice           0x0230      // Product version
+#define USB_DEV_Product             "Debug Probe on Pico2 (CMSIS-DAP)"
+#define USB_DEV_bcdDevice           VERSION_BCD // Product version
 
 ///////////////////////
 // DAP configuration //
@@ -47,13 +48,13 @@
 
 // CMSIS DAP configuration
 #define DAP_PROTOCOL_VERSION        "2.1.1"
-//#define DAP_USE_GPIO_BACKEND
+#define DAP_USE_GPIO_BACKEND
 
 // Vendor Name and Product Name. If these values are set to empty
 // strings, the USB Device Information is used to obtain these values!
 #define DAP_VENDOR_NAME             USB_DEV_Manufacturer
 #define DAP_PRODUCT_NAME            USB_DEV_Product
-#define DAP_FIRMWARE_VERSION        "1.1"
+#define DAP_FIRMWARE_VERSION        VERSION_STRING
 
 // Device/Board information if debug probe is fixed to a dev board.
 // Use empty strings if the chip device and board are not know.
@@ -111,4 +112,4 @@
 #define UART_TARGET_RX_GPIO         5           // target to probe
 #define UART_TARGET_BUFFER_SIZE     1024
 
-#endif // CONFIG_RP2040_LAUNCHPAD_H
+#endif // CONFIG_RPI_PICO2_H

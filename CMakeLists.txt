@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 3.20)
 
 # Set the target board
+
 # set(YAHAL_BOARD "rpi-pico")
 # set(YAHAL_BOARD "rpi-pico2")
+set(YAHAL_BOARD "rpi-debug-probe")
+
 # set(YAHAL_BOARD "rp2040-launchpad")
 # set(YAHAL_BOARD "rp2350-launchpad")
-set(YAHAL_BOARD "rp2xxx-launchpad-probe")
+# set(YAHAL_BOARD "rp2xxx-launchpad-probe")
 
 # Locate the YAHAL library folder
 include(YAHAL_import.cmake)
@@ -23,9 +26,11 @@ target_compile_options(picoprobe++
 yahal_add_me(picoprobe++)
 
 # Set YAHAL system clock to 200MHz for RP2040
+if (RP2040)
 target_compile_definitions(YAHAL_picoprobe++
         PRIVATE SYS_CLK_FREQ=200
 )
+endif()
 
 # Optimize YAHAL for speed
 target_compile_options(YAHAL_picoprobe++

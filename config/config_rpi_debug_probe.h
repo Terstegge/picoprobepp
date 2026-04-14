@@ -19,8 +19,8 @@
 ////////////////////////////////
 
 #define DEBUG_UART_ENABLE                       // Enable debug output via UART
-#define DEBUG_UART_TX_GPIO          0
-#define DEBUG_UART_RX_GPIO          1
+#define DEBUG_UART_TX_GPIO          BC_UART_TX
+#define DEBUG_UART_RX_GPIO          BC_UART_RX
 // #define DEBUG_USB_UART_ENABLE                   // Enable debug output via separate CDC ACM device
 #define DEBUG_LEVEL_USB	            LOG_INFO
 #define DEBUG_LEVEL_DAP             LOG_INFO
@@ -39,7 +39,7 @@
 #define USB_DEV_VID                 0x2e8a      // Raspberry Pi (Trading) Limited
 #define USB_DEV_PID                 0x000c      // Raspberry Pi Debug Probe
 #define USB_DEV_Manufacturer        "Raspberry Pi"
-#define USB_DEV_Product             "Debug Probe on Pico (CMSIS-DAP)"
+#define USB_DEV_Product             "Debug Probe (CMSIS-DAP)"
 #define USB_DEV_bcdDevice           VERSION_BCD // Product version
 
 ///////////////////////
@@ -101,15 +101,15 @@
 ////////////////////////
 
 // SWD/JTAG Hardware configuration
-#define GPIO_SWCLK_TCK              2
-#define GPIO_SWDIO_TMS              3
-#define GPIO_RESET                  6
-#define GPIO_TDI                    7
-#define GPIO_TDO                    8
+#define GPIO_SWCLK_TCK              SWDCLK
+#define GPIO_SWDIO_TMS              SWDIO
+#define GPIO_RESET                  9   // not used
+#define GPIO_TDI                    10  // not used
+#define GPIO_TDO                    11  // not used
 
 // USB UART configuration
-#define UART_TARGET_TX_GPIO         4           // probe to target
-#define UART_TARGET_RX_GPIO         5           // target to probe
+#define UART_TARGET_TX_GPIO         TARGET_UART_TX  // probe to target
+#define UART_TARGET_RX_GPIO         TARGET_UART_RX  // target to probe
 #define UART_TARGET_BUFFER_SIZE     1024
 
 #endif // CONFIG_RPI_PICO_H

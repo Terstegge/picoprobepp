@@ -6,9 +6,8 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Implementation of LEDs for the RP2040-based debug
-// probe during development on the RP2040 Launchpad.
-// The WS2812 LEDs are used in this case.
+// Implementation of LEDs for the RP2040 Launchpad based debug
+// probe during development. The WS2812 LEDs are used in this case.
 //
 #ifndef DAP_LED_RP2040_LAUNCHPAD_H
 #define DAP_LED_RP2040_LAUNCHPAD_H

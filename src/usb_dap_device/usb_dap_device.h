@@ -30,6 +30,7 @@ public:
                    usb_configuration & configuration,
                    DAP_Protocol & dap);
 
+    // The task code
     [[noreturn]] void run() override;
 
     // Read only version of interface descriptor

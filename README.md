@@ -33,7 +33,7 @@ picoprobe++ benefits from the features of the libraries it uses.
   is by far the most commonly used debug protocol today, so JTAG is of less importance.
 * picoprobe++ provides different low level DAP drivers. There is one driver exclusively
   using simple GPIO input/output, and a second driver using the PIO module of the RP2040/RP2350
-  (which yield better performace, of course).
+  (which yields better performace, of course).
   This could be important in cases where the PIO modules are already used for someting else.
 * picoprobe++ and the libraries it uses try to use abstract C++ interfaces at various places.
   This results in a better software structure, clearly separating the generic code from the
@@ -45,7 +45,8 @@ picoprobe++ benefits from the features of the libraries it uses.
 
 Configuration of picoprobe++ starts in `CMakeLists.txt`. At the beginning of
 this file you can comment out one of the currently supported board types
-(pico, pico2, rp2040-launchpad, rp2350-launchpad, rp2xxx-launchpad-probe).
+(pico, pico2, rpi debug probe, rp2040-launchpad, rp2350-launchpad, rp2xxx-launchpad-probe).
+Without changing `CMakeLists.txt`, the configuration default is the RPi Debug Probe board.
 For every board type, there is a matching configuration file in folder
 `config`. Also the LED driver is depending on the board type - see
 `config/config.h` for details. In the board-specific config files, there

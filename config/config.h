@@ -57,6 +57,12 @@
 #define DAP_led DAP_led_rpi_pico
 #endif
 
+#ifdef YAHAL_BOARD_RPI_DEBUG_PROBE
+#include "config_rpi_debug_probe.h"
+#include "DAP_led_rpi_debug_probe.h"
+#define DAP_led DAP_led_rpi_debug_probe
+#endif
+
 #ifdef YAHAL_BOARD_RP2040_LAUNCHPAD
 #include "config_rp2040_launchpad.h"
 #include "DAP_led_rp2040_launchpad.h"

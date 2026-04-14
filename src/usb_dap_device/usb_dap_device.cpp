@@ -65,10 +65,8 @@ usb_dap_device::usb_dap_device( usb_device_controller & controller,
     };
 
     // Endpoint IN handler -> Send a DAP response to the USB host
-    _ep_dap_in->data_handler = [&](uint8_t *, uint16_t) {
-        if (_transmit_data.get(_buffer_in)) {
-            _ep_dap_in->start_transfer(_buffer_in.data, _buffer_in.len);
-        }
+    _ep_dap_in->data_handler = [&](uint8_t * buffer, uint16_t len) {
+        _ep_dap_in->start_transfer(buffer, len);
     };
 }
 
@@ -85,6 +83,8 @@ void usb_dap_device::run() {
             if (_received_data.available_get() ||
                 _transmit_data.available_get()) break;
         }
+
+        // Suspend the task if there is nothing to do...
         if (!_received_data.available_get() &&
             !_transmit_data.available_get()) {
             suspend();
@@ -111,9 +111,8 @@ void usb_dap_device::run() {
         // Send a DAP response if available
         if (_transmit_data.available_get()) {
             if (!_ep_dap_in->is_active()) {
-                // Parameters are discarded. The handler
-                // will check the FIFO for data to send
-                _ep_dap_in->data_handler(nullptr, 0);
+                _transmit_data.get(_buffer_in);
+                _ep_dap_in->data_handler(_buffer_in.data, _buffer_in.len);
             }
         }
     }
