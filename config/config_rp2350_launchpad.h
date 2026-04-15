@@ -48,7 +48,7 @@
 
 // CMSIS DAP configuration
 #define DAP_PROTOCOL_VERSION        "2.1.1"
-//#define DAP_USE_GPIO_BACKEND
+#define DAP_USE_GPIO_BACKEND
 
 // Vendor Name and Product Name. If these values are set to empty
 // strings, the USB Device Information is used to obtain these values!

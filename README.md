@@ -64,7 +64,7 @@ are configuration sections for the following items:
 * **USB configuration** - Typical USB device values like VID/PID and others.
 
 * **DAP configuration** - Various settings for the DAP interface, including
-  several string constants and booleans definiing the support of DAP
+  several string constants and booleans defining the support of DAP
   features.
 
 * **GPIO configuration** - The Pins to be used for the JTAG/SWD signals as

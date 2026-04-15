@@ -93,10 +93,10 @@ int main() {
     // Set up CDC ACM device to target. Create a HW UART object
     // and forward it to the USB UART device.
     uart_rp2xxx target_uart(UART_TARGET_TX_GPIO, UART_TARGET_RX_GPIO);
-    usb_uart_device bc_uart_device(controller, config, target_uart);
-    bc_uart_device.set_FunctionName("Target debug UART");
-    bc_uart_device.sign_up();
-    bc_uart_device.setPriority(90);
+    usb_uart_device target_uart_device(controller, config, target_uart);
+    target_uart_device.set_FunctionName("Target debug UART");
+    target_uart_device.sign_up();
+    target_uart_device.setPriority(90);
 
     // Optional: Set up another CDC ACM device for debugging the debugger
     // firmware (connected to stdio of the debugger SW).
@@ -151,7 +151,7 @@ int main() {
     }
 
     // Set DCD and DTR after USB has connected
-    bc_uart_device.set_dcd_dtr(true, true);
+    target_uart_device.set_dcd_dtr(true, true);
 
     // Welcome the user by blinking some LEDs :)
     // This also indicates that the USB enumeration
