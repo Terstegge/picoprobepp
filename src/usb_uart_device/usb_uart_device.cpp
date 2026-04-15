@@ -142,6 +142,7 @@ void usb_uart_device::run() {
                 _uart.putc(_rx_buffer[i]);
             }
         }
+
         // Try to read data from UART
         len = _tx_buffer.available_get();
         // Only forward data to host if host is active or some

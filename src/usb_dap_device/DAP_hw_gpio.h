@@ -6,7 +6,7 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// DAP HW implementation for the RP2040 MCU using
+// DAP HW implementation for the RP2xxx MCU using
 // simple bit banging.
 //
 #ifndef DAP_HW_GPIO_H
@@ -16,6 +16,7 @@
 #include "task.h"
 #include "DAP_hw_interface.h"
 #include "DAP_log.h"
+using namespace _SIO_;
 
 class DAP_hw_gpio : public DAP_hw_interface {
 public:
@@ -140,8 +141,8 @@ public:
     }
 
     void swd_swdio_enable_output(bool b) override {
-        if (b) _SIO_::SIO.GPIO_OE_SET = (1 << GPIO_SWDIO_TMS);
-        else   _SIO_::SIO.GPIO_OE_CLR = (1 << GPIO_SWDIO_TMS);
+        if (b) SIO.GPIO_OE_SET = (1 << GPIO_SWDIO_TMS);
+        else   SIO.GPIO_OE_CLR = (1 << GPIO_SWDIO_TMS);
     }
 
     //////////////////////////
@@ -201,39 +202,39 @@ public:
 
     inline void delay_edge() {
         // We don't delay after a SWCLK edge
-        // -> maximum speed!
+        // -> maximum speed :)
         //delay_us(1);
     }
 
     inline void swdio_tms_set(bool v) override {
-        if (v) _SIO_::SIO.GPIO_OUT_SET = (1 << GPIO_SWDIO_TMS);
-        else   _SIO_::SIO.GPIO_OUT_CLR = (1 << GPIO_SWDIO_TMS);
+        if (v) SIO.GPIO_OUT_SET = (1 << GPIO_SWDIO_TMS);
+        else   SIO.GPIO_OUT_CLR = (1 << GPIO_SWDIO_TMS);
     }
 
     inline bool swdio_tms_get() override {
-        return _SIO_::SIO.GPIO_IN & (1 << GPIO_SWDIO_TMS);
+        return SIO.GPIO_IN & (1 << GPIO_SWDIO_TMS);
     }
 
     inline void swclk_tck_set(bool v) override {
-        if (v) _SIO_::SIO.GPIO_OUT_SET = (1 << GPIO_SWCLK_TCK);
-        else   _SIO_::SIO.GPIO_OUT_CLR = (1 << GPIO_SWCLK_TCK);
+        if (v) SIO.GPIO_OUT_SET = (1 << GPIO_SWCLK_TCK);
+        else   SIO.GPIO_OUT_CLR = (1 << GPIO_SWCLK_TCK);
     }
 
     inline bool swclk_tck_get() override {
-        return _SIO_::SIO.GPIO_IN & (1 << GPIO_SWCLK_TCK);
+        return SIO.GPIO_IN & (1 << GPIO_SWCLK_TCK);
     }
 
     inline void tdi_set(bool v) override {
-        if (v) _SIO_::SIO.GPIO_OUT_SET = (1 << 16);
-        else   _SIO_::SIO.GPIO_OUT_CLR = (1 << 16);
+        if (v) SIO.GPIO_OUT_SET = (1 << 16);
+        else   SIO.GPIO_OUT_CLR = (1 << 16);
     }
 
     inline bool tdi_get() override {
-        return _SIO_::SIO.GPIO_IN & (1 << 16);
+        return SIO.GPIO_IN & (1 << 16);
     }
 
     inline bool tdo_get() override {
-        return _SIO_::SIO.GPIO_IN & (1 << 17);
+        return SIO.GPIO_IN & (1 << 17);
     }
 
     inline void trst_set(bool) override {

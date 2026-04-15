@@ -35,7 +35,7 @@ public:
         });
     }
 
-    // UART signalling not implemented
+    // UART LEDs handling
     void trigger_uart_tx_led() override {
         _uart_tx = true;
         if (_follow_up_timer.isRunning()) {
@@ -76,6 +76,8 @@ public:
         }
     }
 
+    // This method will also switch on the Power LED
+    // on GPIO2 -signalling successful USB connection
     void welcome() override {
         _power = HIGH;
         for(int i=1; i < 3; ++i) {

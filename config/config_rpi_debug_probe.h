@@ -77,7 +77,7 @@
 
 // CMSIS DAP Protocol support
 #define DAP_CAP_SWD_SUPPORT         true
-#define DAP_CAP_JTAG_SUPPORT        true
+#define DAP_CAP_JTAG_SUPPORT        false
 #define DAP_DEFAULT_PORT            PORT_SWD
 #define DAP_DEFAULT_CLOCK           1000000
 

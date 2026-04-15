@@ -9,6 +9,8 @@
 // DAP HW implementation for the RP2040 MCU using
 // a PIO program for increased performance. See
 // DAP_hw_interface.h for more information.
+// On RR2350 A2, this code seems not to run due to the E9 bug.
+// Tests with the A4 version are planned.
 //
 #ifndef DAP_HW_PIO_H
 #define DAP_HW_PIO_H
@@ -19,6 +21,8 @@
 #include "DAP_log.h"
 #include "dap_control.pio.h"
 #include "task.h"
+using namespace _SIO_;
+using namespace _IO_BANK0_;
 
 class DAP_hw_pio : public DAP_hw_interface {
 public:
@@ -64,10 +68,10 @@ public:
         _tdo.gpioMode      (GPIO::INPUT);
         _reset.gpioMode    (GPIO::INPUT | GPIO::OUTPUT | GPIO::INIT_HIGH);
 
-        _swdio_tms.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
-        _swclk_tck.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
-        _tdi.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
-        _tdo.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
+        _swdio_tms.setSEL(GPIO_CTRL_FUNCSEL__pio1);
+        _swclk_tck.setSEL(GPIO_CTRL_FUNCSEL__pio1);
+        _tdi.setSEL(GPIO_CTRL_FUNCSEL__pio1);
+        _tdo.setSEL(GPIO_CTRL_FUNCSEL__pio1);
 
         _pio_dap->disable();
         configure_JTAG(_pio_dap, GPIO_SWDIO_TMS, GPIO_SWCLK_TCK, GPIO_TDI, GPIO_TDO);
@@ -79,8 +83,8 @@ public:
         _swclk_tck.gpioMode(GPIO::INPUT | GPIO::OUTPUT | GPIO::FAST);
         _swdio_tms.gpioMode(GPIO::INPUT | GPIO::OUTPUT | GPIO::FAST);
 
-        _swclk_tck.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
-        _swdio_tms.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pio1);
+        _swclk_tck.setSEL(GPIO_CTRL_FUNCSEL__pio1);
+        _swdio_tms.setSEL(GPIO_CTRL_FUNCSEL__pio1);
 
         _pio_dap->disable();
         configure_SWD(_pio_dap, GPIO_SWDIO_TMS, GPIO_SWCLK_TCK);
@@ -94,10 +98,10 @@ public:
         _tdi.gpioMode(GPIO::INPUT);
         _tdo.gpioMode(GPIO::INPUT);
 
-        _swclk_tck.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__null);
-        _swdio_tms.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__null);
-        _tdi.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__null);
-        _tdo.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__null);
+        _swclk_tck.setSEL(GPIO_CTRL_FUNCSEL__null);
+        _swdio_tms.setSEL(GPIO_CTRL_FUNCSEL__null);
+        _tdi.setSEL(GPIO_CTRL_FUNCSEL__null);
+        _tdo.setSEL(GPIO_CTRL_FUNCSEL__null);
     }
 
     ///////////////////////////
@@ -191,7 +195,7 @@ public:
     }
 
     inline bool swdio_tms_get() override {
-        return _SIO_::SIO.GPIO_IN & (1 << GPIO_SWDIO_TMS);
+        return SIO.GPIO_IN & (1 << GPIO_SWDIO_TMS);
     }
 
     inline void swclk_tck_set(bool) override {
@@ -202,18 +206,18 @@ public:
     }
 
     inline bool swclk_tck_get() override {
-        return _SIO_::SIO.GPIO_IN & (1 << GPIO_SWCLK_TCK);
+        return SIO.GPIO_IN & (1 << GPIO_SWCLK_TCK);
     }
 
     inline void tdi_set(bool) override {
     }
 
     inline bool tdi_get() override {
-        return _SIO_::SIO.GPIO_IN & (1 << GPIO_TDI);
+        return SIO.GPIO_IN & (1 << GPIO_TDI);
     }
 
     inline bool tdo_get() override {
-        return _SIO_::SIO.GPIO_IN & (1 << GPIO_TDO);
+        return SIO.GPIO_IN & (1 << GPIO_TDO);
     }
 
     inline void trst_set(bool) override {
