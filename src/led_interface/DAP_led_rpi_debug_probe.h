@@ -22,6 +22,7 @@ class DAP_led_rpi_debug_probe : public DAP_led_interface {
 public:
     DAP_led_rpi_debug_probe() {
         // Set LEDs to output
+        _power.gpioMode(GPIO::OUTPUT | GPIO::INIT_LOW);
         _uart_rx.gpioMode(GPIO::OUTPUT);
         _uart_tx.gpioMode(GPIO::OUTPUT);
         _dap_connected.gpioMode(GPIO::OUTPUT);
@@ -76,6 +77,7 @@ public:
     }
 
     void welcome() override {
+        _power = HIGH;
         for(int i=1; i < 3; ++i) {
             bool val = (bool)(i % 2);
             _uart_rx = val;
@@ -87,8 +89,9 @@ public:
     }
 
 private:
-    gpio_rp2xxx   _uart_rx {UART_RX_LED};
-    gpio_rp2xxx   _uart_tx {UART_TX_LED};
+    gpio_rp2xxx   _power         {POWER_LED};
+    gpio_rp2xxx   _uart_rx       {UART_RX_LED};
+    gpio_rp2xxx   _uart_tx       {UART_TX_LED};
     gpio_rp2xxx   _dap_connected {DAP_CONNECTED_LED};
     gpio_rp2xxx   _dap_running   {DAP_RUNNING_LED};
 
