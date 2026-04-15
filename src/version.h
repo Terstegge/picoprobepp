@@ -13,7 +13,7 @@
 #define VERSION_MINOR 3
 #define VERSION_PATCH 0
 #define VERSION_STRING  "1.30"
-#define VERSION_BCD     0x0120
+#define VERSION_BCD     0x0130
 
 #endif // VERSION_H
 
