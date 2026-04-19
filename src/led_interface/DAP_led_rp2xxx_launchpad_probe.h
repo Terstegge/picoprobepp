@@ -71,9 +71,9 @@ public:
                                     TIMER::PERIODIC);
 
         // Set up PWM for blue LED
-        _red.  setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pwm);
-        _green.setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pwm);
-        _blue. setSEL(_IO_BANK0_::GPIO_CTRL_FUNCSEL__pwm);
+        _red.  setSEL(GPIO_CTRL_FUNCSEL__pwm);
+        _green.setSEL(GPIO_CTRL_FUNCSEL__pwm);
+        _blue. setSEL(GPIO_CTRL_FUNCSEL__pwm);
 
         uint32_t div = CLK_SYS / 1000 / 4096;
         PWM.CH1_DIV.INT  = div / 16;

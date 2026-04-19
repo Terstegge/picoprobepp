@@ -81,6 +81,7 @@ usb_uart_device::usb_uart_device(usb_device_controller &ctrl,
     });
 
     received_handler = ([&]() {
+        // We received data from host -> activate the processing task
         resume();
     });
 
@@ -102,6 +103,7 @@ usb_uart_device::usb_uart_device(usb_device_controller &ctrl,
 }
 
 void usb_uart_device::set_dcd_dtr(bool dcd, bool dsr) {
+    // Send DCD and DSR signals to host PC side
     CDC::bmUartState_t uart_state;
     uart_state.bRxCarrier_DCD = dcd;
     uart_state.bTxCarrier_DSR = dsr;

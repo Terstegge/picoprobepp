@@ -60,8 +60,8 @@ usb_dap_device::usb_dap_device( usb_device_controller & controller,
             // Trigger our run() method to process the request
             resume();
         }
-        // Trigger a new transfer
-        _ep_dap_out->start_transfer(_buffer_out.data, _ep_dap_out->descriptor.wMaxPacketSize);
+        // Trigger a new transfer (the next receive)
+        _ep_dap_out->start_transfer(_buffer_out.data, TUPP_DEFAULT_PAKET_SIZE);
     };
 }
 
