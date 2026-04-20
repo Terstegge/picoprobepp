@@ -65,7 +65,7 @@ public:
     }
 
 private:
-    gpio_rp2xxx   _green{LED_GREEN_GPIO};
+    gpio_rp2xxx   _green{LED_GPIO};
     timer_rp2xxx  _blink_timer;
     bool          _just_connected {false};
     bool          _connected {false};
