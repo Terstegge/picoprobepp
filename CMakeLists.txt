@@ -37,12 +37,10 @@ target_compile_options(YAHAL_picoprobe++
         PRIVATE -Ofast
 )
 
-# Add WS2812 driver if we use a RP2xxx Launchpad
-if (YAHAL_BOARD STREQUAL "rp2040-launchpad")
-yahal_add_driver(picoprobe++ rp2040/ws2812)
-endif()
-if (YAHAL_BOARD STREQUAL "rp2350-launchpad")
-    yahal_add_driver(picoprobe++ rp2350/ws2812)
+# Add WS2812 driver if running on a Launchpad
+if (YAHAL_BOARD STREQUAL "rp2040-launchpad" OR
+    YAHAL_BOARD STREQUAL "rp2350-launchpad")
+yahal_add_driver(picoprobe++ ${YAHAL_MCU}/ws2812)
 endif()
 
 # Add USB and DAP libraries

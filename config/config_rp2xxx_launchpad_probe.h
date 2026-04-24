@@ -38,7 +38,7 @@
 #define USB_DEV_bcdUSB              0x210       // USB version in BCD
 #define USB_DEV_bMaxPacketSize0     TUPP_DEFAULT_PAKET_SIZE
 #define USB_DEV_VID                 0x2e8a      // Raspberry Pi (Trading) Limited
-#define USB_DEV_PID                 0x1089      // RP2040 Lauchpad (see https://github.com/raspberrypi/usb-pid)
+#define USB_DEV_PID                 0x000c      // 0x1089 RP2040 Lauchpad (see https://github.com/raspberrypi/usb-pid)
 #define USB_DEV_Manufacturer        "FH Aachen"
 #define USB_DEV_Product             "RP2xxx Lauchpad Debug Probe (CMSIS-DAP)"
 #define USB_DEV_bcdDevice           VERSION_BCD // Product version

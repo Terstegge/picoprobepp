@@ -16,28 +16,30 @@
 #include "DAP_led_interface.h"
 #include "task.h"
 
+// Time after which UART LEDs are switched off,
+// when there is no further UART activity.
 #define LED_FOLLOW_UP_TIME_MS 20
 
 class DAP_led_rpi_debug_probe : public DAP_led_interface {
 public:
     DAP_led_rpi_debug_probe() {
         // Set LEDs to output
-        _power.gpioMode(GPIO::OUTPUT | GPIO::INIT_LOW);
-        _uart_rx.gpioMode(GPIO::OUTPUT);
-        _uart_tx.gpioMode(GPIO::OUTPUT);
-        _dap_connected.gpioMode(GPIO::OUTPUT);
-        _dap_running.gpioMode(GPIO::OUTPUT);
+        _power_led.gpioMode(GPIO::OUTPUT);
+        _uart_rx_led.gpioMode(GPIO::OUTPUT);
+        _uart_tx_led.gpioMode(GPIO::OUTPUT);
+        _connected_led.gpioMode(GPIO::OUTPUT);
+        _running_led.gpioMode(GPIO::OUTPUT);
 
         // Switch off the RX/TX LEDs
         _follow_up_timer.setCallback([&] () {
-            _uart_rx = 0;
-            _uart_tx = 0;
+            _uart_rx_led = LOW;
+            _uart_tx_led = LOW;
         });
     }
 
     // UART LEDs handling
     void trigger_uart_tx_led() override {
-        _uart_tx = true;
+        _uart_tx_led = HIGH;
         if (_follow_up_timer.isRunning()) {
             _follow_up_timer.reset();
         } else {
@@ -48,7 +50,7 @@ public:
     }
 
     void trigger_uart_rx_led() override {
-        _uart_rx = true;
+        _uart_rx_led = HIGH;
         if (_follow_up_timer.isRunning()) {
             _follow_up_timer.reset();
         } else {
@@ -62,7 +64,7 @@ public:
     // connection status between debugger and target.
     inline void set_connected_led(bool val) override {
         if (val) _just_connected = true;
-        _dap_connected = val;
+        _connected_led = val;
     }
 
     // Switch on/off the LED signalling the
@@ -72,30 +74,30 @@ public:
             // Ignore the first switch-on from openocd...
             _just_connected = false;
         } else {
-            _dap_running = val;
+            _running_led = val;
         }
     }
 
     // This method will also switch on the Power LED
-    // on GPIO2 -signalling successful USB connection
+    // on GPIO2 - signalling successful USB connection
     void welcome() override {
-        _power = HIGH;
+        _power_led = HIGH;
         for(int i=1; i < 3; ++i) {
             bool val = (bool)(i % 2);
-            _uart_rx = val;
-            _uart_tx = val;
-            _dap_connected = val;
-            _dap_running   = val;
+            _uart_rx_led = val;
+            _uart_tx_led = val;
+            _connected_led = val;
+            _running_led   = val;
             task::sleep_ms(200);
         }
     }
 
 private:
-    gpio_rp2xxx   _power         {POWER_LED};
-    gpio_rp2xxx   _uart_rx       {UART_RX_LED};
-    gpio_rp2xxx   _uart_tx       {UART_TX_LED};
-    gpio_rp2xxx   _dap_connected {DAP_CONNECTED_LED};
-    gpio_rp2xxx   _dap_running   {DAP_RUNNING_LED};
+    gpio_rp2xxx   _power_led     {POWER_LED};
+    gpio_rp2xxx   _uart_rx_led   {UART_RX_LED};
+    gpio_rp2xxx   _uart_tx_led   {UART_TX_LED};
+    gpio_rp2xxx   _connected_led {DAP_CONNECTED_LED};
+    gpio_rp2xxx   _running_led   {DAP_RUNNING_LED};
 
     timer_rp2xxx  _follow_up_timer;
     bool          _just_connected {false};

@@ -16,7 +16,7 @@ Instead, it is based on the following components:
 * [openDAP++](https://github.com/Terstegge/openDAPpp), a portable CMSIS-DAP
   implementation written in C++
   
-picoprobe++ benefits from the features of the libraries it uses.
+picoprobe++ benefits from the features of the libraries it uses:
 
 * picoprobe++ uses the YAHAL preemptive multitasking, which simplifies the overall
   software structure. There are separate tasks for the CDC ACM UART device and the

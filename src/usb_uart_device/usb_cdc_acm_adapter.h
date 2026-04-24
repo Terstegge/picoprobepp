@@ -6,8 +6,8 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Wrapper class to convert a usb_cdc_acm_device into
-// a uart_data_interface, so it e.g. can be used for
+// Wrapper class to convert an usb_cdc_acm_device into
+// an uart_data_interface, so it e.g. can be used for
 // posix_io character input/output.
 //
 #ifndef USB_CDC_ACM_ADAPTER_H

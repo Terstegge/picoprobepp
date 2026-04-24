@@ -107,7 +107,9 @@ void usb_uart_device::set_dcd_dtr(bool dcd, bool dsr) {
     CDC::bmUartState_t uart_state;
     uart_state.bRxCarrier_DCD = dcd;
     uart_state.bTxCarrier_DSR = dsr;
-    notify_serial_state( uart_state );
+    while (!notify_serial_state( uart_state )) {
+        task::sleep_ms(20);
+    }
 }
 
 void usb_uart_device::run() {

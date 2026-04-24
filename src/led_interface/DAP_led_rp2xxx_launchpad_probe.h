@@ -70,7 +70,7 @@ public:
         _blue_blink_timer.setPeriod(BLUE_BLINK_PERIOD_MS * 1000,
                                     TIMER::PERIODIC);
 
-        // Set up PWM for blue LED
+        // Set up PWM for all LEDs
         _red.  setSEL(GPIO_CTRL_FUNCSEL__pwm);
         _green.setSEL(GPIO_CTRL_FUNCSEL__pwm);
         _blue. setSEL(GPIO_CTRL_FUNCSEL__pwm);
@@ -89,7 +89,7 @@ public:
         PWM.CH2_CSR.EN   = 1;
     }
 
-    // Switch on the LED signalling UART TX
+    // Switch on the LED, signalling UART TX
     // activity from the target. After the
     // follow-up time, the LED is switched
     // off automatically.
@@ -104,7 +104,7 @@ public:
         }
     }
 
-    // Switch on the LED signalling UART RX
+    // Switch on the LED, signalling UART RX
     // activity to the target. After the
     // follow-up time, the LED is switched
     // off automatically.
@@ -126,7 +126,7 @@ public:
         set_blue(val);
     }
 
-    // Switch on/off the LED signalling the
+    // Switch on/off the LED blinking, showing the
     // 'target running' status
     inline void set_running_led(bool val) override {
         if (_just_connected) {
