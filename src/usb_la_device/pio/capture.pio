@@ -1,0 +1,38 @@
+///////////////////////////////////////////////////////////////
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 Andreas Terstegge
+//
+// This file is part of picoprobe++
+// A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
+///////////////////////////////////////////////////////////////
+//
+// This is a very small programm to read out GPIO samples,
+// and push those values to the FIFO, where they typically
+// will be processed by a DMA channel.
+//
+.program capture
+    // Number of bit will be set by configuration method!
+    in pins, 1
+.wrap
+
+% yahal {
+
+inline void configure_capture(std::unique_ptr<SM>& sm,
+                              uint8_t gpio_base, uint8_t gpio_count) {
+    // Set the wrap values
+    sm->setWrap(capture_wrap_target, capture_wrap);
+    // Set pin base for in
+    sm->regs.SM_PINCTRL.IN_BASE = gpio_base;
+    // Set shift direction for in (left)
+    sm->regs.SM_SHIFTCTRL.IN_SHIFTDIR = 0;
+    // Enable autopush
+    sm->regs.SM_SHIFTCTRL.AUTOPUSH = true;
+    // Set push threshold
+    sm->regs.SM_SHIFTCTRL.PUSH_THRESH = gpio_count;
+    // Use both FIFOs for RX
+    sm->regs.SM_SHIFTCTRL.FJOIN_RX = 1;
+    // Encode and set 'in'-instruction
+    sm->pio.INSTR_MEM[sm->load_addr] = op_IN(0, in_src_t::PINS, gpio_count);
+}
+
+%}
