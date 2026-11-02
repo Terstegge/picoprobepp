@@ -24,18 +24,22 @@ public:
     : usb_cdc_acm_device(controller, conf) {
     }
 
-    inline bool available() override {
+    bool available() override {
         return usb_cdc_acm_device::available() > 0;
     }
 
-    inline char getc() override {
+    char getc() override {
         uint8_t c {0};
         usb_cdc_acm_device::read(&c, 1);
         return c;
     }
 
-    inline void putc(char c) override {
-        usb_cdc_acm_device::write((uint8_t *)&c, 1);
+    void putc(char c) override {
+        uint32_t sent = usb_cdc_acm_device::write((uint8_t *)&c, 1);
+        while (sent != 1) {
+            task::sleep_us(500);
+            sent = usb_cdc_acm_device::write((uint8_t *)&c, 1);
+        }
     }
 
     // Interrupt handling not supported

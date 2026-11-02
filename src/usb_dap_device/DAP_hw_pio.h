@@ -16,6 +16,7 @@
 #define DAP_HW_PIO_H
 
 #include <cassert>
+#include <memory>
 #include "config.h"
 #include "DAP_hw_interface.h"
 #include "DAP_log.h"
@@ -242,7 +243,7 @@ private:
     gpio_rp2xxx _tdo;
     gpio_rp2xxx _reset;
 
-    SM *        _pio_dap;
+    std::unique_ptr<SM> _pio_dap;
     swd_cmd_t   _cmd;
 };
 

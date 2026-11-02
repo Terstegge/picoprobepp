@@ -12,8 +12,6 @@
 #ifndef DAP_LED_RP2040_LAUNCHPAD_H
 #define DAP_LED_RP2040_LAUNCHPAD_H
 
-#include <cstdint>
-#include "config.h"
 #include "DAP_led_interface.h"
 #include "task.h"
 #include "ws2812_rp2040.h"
