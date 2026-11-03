@@ -133,17 +133,16 @@ bool usb_la_device::queue_block(uint8_t* data, const size_t len) {
     la_block_t current_block;
     while (true) {
         // Prevent this task from being suspended too early.
-        // When a new request arrives within 50 ms, the task
+        // When a new request arrives within 100 ms, the task
         // stays in the READY state, and we do not waste time
         // in other tasks.
-        const uint64_t until = millis() + 50;
+        const uint64_t until = millis() + 100;
         while (millis() < until) {
-            if (_transmit_queue.available_get() ||
-                _rx_fifo.available_get()) break;
+            if (_transmit_queue.available_get()) break;
         }
 
-        if (!_transmit_queue.available_get() &&
-            !_rx_fifo.available_get()) {
+        // Resume the task if there is nothing to do...
+        if (!_transmit_queue.available_get()) {
             suspend();
             yield();
         }
@@ -157,6 +156,5 @@ bool usb_la_device::queue_block(uint8_t* data, const size_t len) {
                 _ep_data_in->start_transfer(current_block.data, current_block.len);
             }
         }
-        yield();
     }
 }

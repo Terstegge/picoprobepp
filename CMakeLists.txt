@@ -4,9 +4,9 @@ cmake_minimum_required(VERSION 3.20)
 
 # set(YAHAL_BOARD "rpi-pico")
 # set(YAHAL_BOARD "rpi-pico2")
-set(YAHAL_BOARD "rpi-debug-probe")
+# set(YAHAL_BOARD "rpi-debug-probe")
 
-# set(YAHAL_BOARD "rp2040-launchpad")
+set(YAHAL_BOARD "rp2040-launchpad")
 # set(YAHAL_BOARD "rp2350-launchpad")
 # set(YAHAL_BOARD "rp2xxx-launchpad-probe")
 
@@ -24,14 +24,12 @@ target_compile_options(picoprobe++
 
 # Add YAHAL
 yahal_add_me(picoprobe++)
-
 # Set YAHAL system clock to 200MHz for RP2040
 if (RP2040)
 target_compile_definitions(YAHAL_picoprobe++
         PRIVATE SYS_CLK_FREQ=200
 )
 endif()
-
 # Optimize YAHAL for speed
 target_compile_options(YAHAL_picoprobe++
         PRIVATE -Ofast
@@ -43,8 +41,12 @@ if (YAHAL_BOARD STREQUAL "rp2040-launchpad" OR
 yahal_add_driver(picoprobe++ ${YAHAL_MCU}/ws2812)
 endif()
 
-# Add USB and DAP libraries
+# Add USB and DAP libraries. Tweak parameters.
 yahal_add_library(picoprobe++ tinyUSB++)
+target_compile_definitions(tinyUSB++_picoprobe++
+        INTERFACE TUPP_MAX_INTERF_PER_CONF=10
+        INTERFACE TUPP_MAX_STRINGS=20
+)
 yahal_add_library(picoprobe++ openDAP++)
 
 yahal_add_custom_targets(picoprobe++)

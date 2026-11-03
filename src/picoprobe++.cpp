@@ -31,6 +31,9 @@ using enum TUPP::wPropertyDataType_t;
 #include "DAP_hw_pio.h"
 #include "DAP_hw_gpio.h"
 #include "DAP_log.h"
+#include "usb_la_device.h"
+#include "la_protocol.h"
+#include "usb_log.h"
 
 #include "posix_io.h"
 #include "task.h"
@@ -43,14 +46,14 @@ int main() {
     posix_io::inst.register_stdio(uart);
     #endif
 
-    // Logging control for USB and DAP code
+    // Log levels of various components
     usb_log::inst.setLevel(usb_log::DEBUG_LEVEL_USB);
     DAP_log::inst.setLevel(DAP_log::DEBUG_LEVEL_DAP);
 
     // Get the unique ID of this MCU/board
     auto id = unique_id_rp2xxx::read_unique_id_string();
 
-    // Set up USB Device driver, USB device and
+    // Set up USB Device driver, USB device and put
     // generic device controller on top
     usb_dcd & driver = usb_dcd::inst();
     usb_device device;
@@ -77,7 +80,7 @@ int main() {
     // Set up CMSIS DAP device. Select DAP HW driver and create
     // a DAP protocol instance using this driver. Then use the
     // DAP protocol instance for the USB DAP device, which will
-    // handle the USB bulk endpoints amd process the CMSIS DAP
+    // handle the USB bulk endpoints and process the CMSIS DAP
     // requests.
     #ifdef DAP_USE_GPIO_BACKEND
     DAP_hw_gpio dap_hw; // use GPIO implementation
@@ -90,13 +93,23 @@ int main() {
     dap_device.sign_up();
     dap_device.setPriority(100);
 
-    // Set up CDC ACM device to target. Create a HW UART object
-    // and forward it to the USB UART device.
+    // Set up the task for the CDC ACM device to the target MCU.
+    // Create a HW UART object and connect it to the USB UART device.
     uart_rp2xxx target_uart(UART_TARGET_TX_GPIO, UART_TARGET_RX_GPIO);
     usb_uart_device target_uart_device(controller, config, target_uart);
     target_uart_device.set_FunctionName("Target debug UART");
     target_uart_device.sign_up();
     target_uart_device.setPriority(90);
+
+    #ifdef LA_SUPPORT
+    // Set up Logic Analyzer (USB part and protocol processing)
+    usb_la_device la(controller, config);
+    la.sign_up();
+    la.setPriority(80);
+    la_protocol la_protocol(la);
+    la_protocol.sign_up();
+    la_protocol.setPriority(80);
+    #endif
 
     // Optional: Set up another CDC ACM device for debugging the debugger
     // firmware (connected to stdio of the debugger SW).
@@ -127,7 +140,7 @@ int main() {
     reg_prop.add_string( "{CDB3B5AD-293B-4663-AA36-1AAE46463776}" );
     reg_prop.add_end_marker();
 
-    // LED handler - connect USB/DAP callbacks to the LEDs
+    // LED handlers - connect UART/DAP callbacks to the LEDs
     DAP_led leds;
     usb_uart_device::uart_tx_cb = [&]()       { leds.trigger_uart_tx_led(); };
     usb_uart_device::uart_rx_cb = [&]()       { leds.trigger_uart_rx_led(); };
@@ -159,6 +172,5 @@ int main() {
     leds.welcome();
 
     TUPP_LOG(LOG_INFO, "Starting the scheduler ...");
-    // Start the multitasking kernel
     task::start_scheduler();
 }

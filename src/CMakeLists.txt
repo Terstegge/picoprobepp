@@ -1,6 +1,7 @@
 add_subdirectory(led_interface)
 add_subdirectory(usb_dap_device)
 add_subdirectory(usb_uart_device)
+add_subdirectory(usb_la_device)
 
 target_sources(picoprobe++ PRIVATE
         picoprobe++.cpp

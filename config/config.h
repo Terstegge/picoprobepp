@@ -14,6 +14,10 @@
 #include "board.h"
 
 #ifdef RP2040
+#include "adc_rp2040.h"
+#define   adc_rp2xxx adc_rp2040
+#include "dma_rp2040.h"
+#define   dma_rp2xxx dma_rp2040
 #include "gpio_rp2040.h"
 #define   gpio_rp2xxx gpio_rp2040
 #include "unique_id_rp2040.h"
@@ -30,6 +34,10 @@
 #endif
 
 #ifdef RP2350
+#include "adc_rp2350.h"
+#define   adc_rp2xxx adc_rp2350
+#include "dma_rp2350.h"
+#define   dma_rp2xxx dma_rp2350
 #include "gpio_rp2350.h"
 #define   gpio_rp2xxx gpio_rp2350
 #include "unique_id_rp2350.h"

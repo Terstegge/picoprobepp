@@ -24,6 +24,7 @@
 //#define DEBUG_USB_UART_ENABLE                   // Enable debug output via separate CDC ACM device
 #define DEBUG_LEVEL_USB	            LOG_INFO
 #define DEBUG_LEVEL_DAP             LOG_INFO
+#define DEBUG_LEVEL_LA              LOG_INFO
 //#define START_TASK_MONITOR                      // Start the task monitor
 
 ///////////////////////
@@ -113,5 +114,13 @@
 #define UART_TARGET_RX_GPIO         9           // target to probe
 #define UART_TARGET_BUFFER_SIZE     1024
 
-#endif // CONFIG_RP2040_LAUNCHPAD_H
+//////////////////////////////////
+// Logic Analyzer configuration //
+//////////////////////////////////
+#define LA_SUPPORT                  true            // Enable the Logic Analyzer
+#define LA_D_CHANNEL_START          16
+#define LA_D_CHANNEL_COUNT          10
+#define LA_A_CHANNEL_START          26
+#define LA_A_CHANNEL_COUNT          4
 
+#endif // CONFIG_RP2040_LAUNCHPAD_H
