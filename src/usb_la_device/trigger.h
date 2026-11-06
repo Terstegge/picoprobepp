@@ -6,14 +6,14 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 /**
- * @file la_trigger.h
+ * @file trigger.h
  * @brief GPIO Trigger class to be used with a logic analyzer.
  *
  * This class implements a 'Trigger' - an object which will wait
  * until a specific GPIO status (levels or edges) are detected.
  */
-#ifndef LA_TRIGGER_H
-#define LA_TRIGGER_H
+#ifndef TRIGGER_H
+#define TRIGGER_H
 
 #include <cstdint>
 #include "board.h"
@@ -28,7 +28,7 @@ enum trigger_type {
     NONE=0, LEVEL_LOW=1, LEVEL_HIGH=2, FALLING=4, RISING=8, EDGE=12
 };
 
-class la_trigger {
+class trigger {
 public:
     /**
      * @brief Configure a trigger object by specifying the trigger
@@ -63,4 +63,4 @@ private:
     volatile uint32_t * _reg   {nullptr};
 };
 
-#endif // LA_TRIGGER_H
+#endif // TRIGGER_H

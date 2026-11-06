@@ -1,14 +1,14 @@
-#ifndef LA_PROTOCOL_H
-#define LA_PROTOCOL_H
+#ifndef PROTOCOL_H
+#define PROTOCOL_H
 
 #include <array>
 #include "task.h"
 #include "usb_la_device.h"
-#include "la_capture.h"
+#include "capture.h"
 
-class la_protocol final : public task {
+class LA_protocol final : public task {
 public:
-    explicit la_protocol(usb_la_device & usb);
+    explicit LA_protocol(usb_la_device & usb);
 
     [[noreturn]] void run() override;
 
@@ -20,8 +20,10 @@ private:
                                                 uint8_t last);
 
     usb_la_device &         _usb;
-    la_capture              _capture;
+    capture                 _capture;
     capture_config_t        _capture_config;
+
+    size_t                  _total_bytes_sent {0};
 
     std::array<char, 20>    _cmd_str  {};
     std::array<char, 20>    _resp_str {};

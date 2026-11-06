@@ -6,7 +6,7 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-#include "la_capture.h"
+#include "capture.h"
 #include "capture.pio.h"
 #include "usb_log.h"
 #include <task.h>
@@ -15,10 +15,10 @@ using enum usb_log::log_level;
 
 #define SAMPLE_BUFFER_SIZE 50000
 
-la_capture::la_capture() {
+capture::capture() {
     // Allocate sample buffers
-    _buffer_A = new uint8_t[SAMPLE_BUFFER_SIZE];
-    _buffer_B = new uint8_t[SAMPLE_BUFFER_SIZE];
+    _buffer_A = new uint8_t[2*SAMPLE_BUFFER_SIZE];
+    _buffer_B = _buffer_A + SAMPLE_BUFFER_SIZE;
 
     // Load the sample SM
     _capture_sm = pio_rp2xxx::pio0.loadProgram(capture_program);
@@ -37,19 +37,34 @@ la_capture::la_capture() {
 
 }
 
-bool la_capture::start(capture_config_t * c) {
+bool capture::start(capture_config_t * c) {
+    _status = IDLE;
+
     // Check if capture is inactive
     if (_status != IDLE) return false;
     _capture_config = c;
     _is_active = true;
+    _samples_read = 0;
+    _planned_samples = 0;
+
+    // Put a specific pattern in the buffer
+    for (size_t i=0; i < SAMPLE_BUFFER_SIZE*2; ++i) {
+        _buffer_A[i] = (i & 1) ? 0x8F : 0x80;
+    }
 
     // Pre trigger samples müssen weniger als 1-2 * BUFFER_SIZE sein!!
+
+    _capture_sm->reset();
+    // dma_rp2xxx::reset();
+    // _dma_A = dma_rp2xxx::allocateChannel();
+    // _dma_B = dma_rp2xxx::allocateChannel();
 
     // Configure the capture PIO state machine
     configure_capture(_capture_sm,
                       _capture_config->digital_channels_base,
                       _capture_config->number_of_digital_channels);
     _capture_sm->setClock(_capture_config->sample_rate);
+
 
     // Pre-configure the DMA channels
     _dma_A->READ_ADDR       = (uint32_t)&_capture_sm->pio.RXF[_capture_sm->sm_index];
@@ -109,7 +124,8 @@ bool la_capture::start(capture_config_t * c) {
     return true;
 }
 
-void la_capture::abort() {
+void capture::abort() {
+    TUPP_LOG(LOG_INFO, "abort()");
     uint32_t mask = (1 << _dma_A->getIndex()) |
                     (1 << _dma_B->getIndex());
     // Abort DMA channels
@@ -134,44 +150,77 @@ void la_capture::abort() {
     //_capture_sm->setRegister(out_dest_t::PC, _capture_sm->load_addr);
 }
 
-void COPY_TO_RAM la_capture::dma_irq_handler(bool is_A) {
-    //TUPP_LOG(LOG_INFO, "dma_irq_handler(%b)", is_A);
+void COPY_TO_RAM capture::dma_irq_handler(bool is_A) {
+    // 1. Berechne sofort, wie viele Samples ab JETZT insgesamt noch fehlen
+    //size_t samples_needed = _capture_config->post_trigger_samples - _samples_read;
+    size_t samples_needed = _capture_config->post_trigger_samples - _planned_samples;
+
     if (is_A) {
+        // 2. SOFORT Kanal A für die nächste Runde vorbereiten (bevor wir Daten verarbeiten)
+        if (samples_needed > _samples_per_buffer) {
+            // Normaler Ping-Pong-Betrieb: Voller Puffer
+            _dma_A->WRITE_ADDR  = (uint32_t)_buffer_A;
+            _dma_A->TRANS_COUNT = _samples_per_buffer;
+            _dma_A->CTRL.EN     = true;
+            _planned_samples += _samples_per_buffer;
+        } else if (samples_needed > 0) {
+            // Die finale Runde bricht an: Programmiere Kanal A auf den EXAKTEN Rest
+            _dma_A->WRITE_ADDR  = (uint32_t)_buffer_A;
+            _dma_A->TRANS_COUNT = samples_needed;
+            // Durchbrechen der Kette: Wenn A fertig ist, soll er nicht mehr auf B chainen
+            _dma_A->CTRL.CHAIN_TO = _dma_A->getIndex();
+            _dma_A->CTRL.EN     = true;
+            _planned_samples += samples_needed;
+        }
+
+        // 3. ERST JETZT die gerade fertig gewordenen Daten von Puffer A verarbeiten
         if (_status != IDLE) {
-            // Process data
             data_handler(_buffer_A, _samples_per_buffer);
             _samples_read += _samples_per_buffer;
         }
 
-        if (_samples_read == _capture_config->post_trigger_samples) {
+        // 4. Prüfen, ob das Gesamtziel erreicht wurde
+        if (_samples_read >= _capture_config->post_trigger_samples) {
+            _capture_sm->reset();
+            _dma_B->CTRL.EN     = false;
             _dma_A->CTRL.EN     = false;
             _is_active          = false;
-            _capture_sm.reset();
-        } else {
-            // Buffer A is ready. Prepare it for another round
-            _dma_A->WRITE_ADDR  = (uint32_t)_buffer_A;
-            _dma_A->TRANS_COUNT = _samples_per_buffer;
-            _dma_A->CTRL.EN     = true;
         }
-    } else {
+    }
+    else { // !is_A (Kanal B ist fertig geworden)
+        // 2. SOFORT Kanal B für die nächste Runde vorbereiten
+        if (samples_needed > _samples_per_buffer) {
+            // Normaler Ping-Pong-Betrieb: Voller Puffer
+            _dma_B->WRITE_ADDR  = (uint32_t)_buffer_B;
+            _dma_B->TRANS_COUNT = _samples_per_buffer;
+            _dma_B->CTRL.EN     = true;
+            _planned_samples += _samples_per_buffer;
+        } else if (samples_needed > 0) {
+            // Die finale Runde bricht an: Programmiere Kanal B auf den EXAKTEN Rest
+            _dma_B->WRITE_ADDR  = (uint32_t)_buffer_B;
+            _dma_B->TRANS_COUNT = samples_needed;
+            // Durchbrechen der Kette: Wenn B fertig ist, soll er nicht mehr auf A chainen
+            _dma_B->CTRL.CHAIN_TO = _dma_B->getIndex();
+            _dma_B->CTRL.EN     = true;
+            _planned_samples += samples_needed;
+        }
+
+        // 3. ERST JETZT die gerade fertig gewordenen Daten von Puffer B verarbeiten
         if (_status != IDLE) {
-            // Process data
             data_handler(_buffer_B, _samples_per_buffer);
             _samples_read += _samples_per_buffer;
         }
 
-        if (_samples_read == _capture_config->post_trigger_samples) {
+        // 4. Prüfen, ob das Gesamtziel erreicht wurde
+        if (_samples_read >= _capture_config->post_trigger_samples) {
+            _capture_sm->reset();
+            _dma_A->CTRL.EN     = false;
             _dma_B->CTRL.EN     = false;
             _is_active          = false;
-            _capture_sm.reset();
-        } else {
-            // Buffer B is ready. Prepare it for another round
-            _dma_B->WRITE_ADDR  = (uint32_t)_buffer_B;
-            _dma_B->TRANS_COUNT = _samples_per_buffer;
-            _dma_B->CTRL.EN     = true;
         }
     }
 }
+
 
 //    is_capturing = is_aborting = capture_completed = false;
 //    triggered_channel= -1;

@@ -1,11 +1,19 @@
+///////////////////////////////////////////////////////////////
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 Andreas Terstegge
 //
-// Created by andreas on 30.10.26.
-//
+// This file is part of picoprobe++
+// A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
+///////////////////////////////////////////////////////////////
+/**
+ * @file capture.h
+ * @brief
+ *
+ */
+#ifndef CAPTURE_H
+#define CAPTURE_H
 
-#ifndef LA_CAPTURE_H
-#define LA_CAPTURE_H
-
-#include "la_trigger.h"
+#include "trigger.h"
 #include "config.h"
 #include <array>
 
@@ -17,12 +25,12 @@ struct capture_config_t {
     uint32_t    sample_rate {0};
     uint32_t    pre_trigger_samples {0};
     uint32_t    post_trigger_samples {0};
-    std::array<la_trigger, 4> trigger_stages;
+    std::array<trigger, 4> trigger_stages;
 };
 
-class la_capture {
+class capture {
 public:
-    la_capture();
+    capture();
 
     bool start(capture_config_t * c);
     void abort();
@@ -58,7 +66,7 @@ private:
     // Digital input pins
     gpio_rp2xxx _d_channels[LA_D_CHANNEL_COUNT];
 
-    // PIO State Machines
+    // PIO State Machine reading the samples.
     std::unique_ptr<SM> _capture_sm;
 
     // DMA channels
@@ -72,7 +80,8 @@ private:
     uint32_t _samples_per_buffer {0};
 
     uint32_t _samples_read {0};
+    uint32_t _planned_samples {0};
 };
 
 
-#endif //PICOPROBE_LA_CAPTURE_H
+#endif // CAPTURE_H

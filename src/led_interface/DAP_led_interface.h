@@ -6,40 +6,52 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Abstract interface for handling LEDs on a
-// CMSIS DAP compliant debug probe. There are
-// two LEDs (connected/running) for the CMSIS
-// DAP protocol, and two additional LEDs for
-// signalling UART (RX/TX) activity. The drivers
-// implementing this interface have to make sure
-// that the UART LEDs are turned off automatically
-// after a specific follow-up time.
-//
+/**
+ * @file DAP_led_interface.h
+ * @brief Abstract interface for handling LEDs on a CMSIS DAP debug probe.
+ *
+ * There are two LEDs (connected/running) for the CMSIS DAP protocol,
+ * and two additional LEDs for signalling UART (RX/TX) activity. The
+ * drivers implementing this interface have to make sure that the UART
+ * LEDs are turned off automatically after a specific follow-up time.
+ */
 #ifndef DAP_LED_INTERFACE_H
 #define DAP_LED_INTERFACE_H
 
+/**
+ * @brief Abstract interface for the LEDs of a CMSIS DAP debug probe.
+ */
 class DAP_led_interface {
-    // Switch on the LED signalling UART TX
-    // activity from the target. After the
-    // follow-up time, the LED is switched
-    // off automatically.
+public:
+    /**
+     * @brief Switch on the LED signalling UART TX activity from the target.
+     *
+     * After the follow-up time, the LED is switched off automatically.
+     */
     virtual void trigger_uart_tx_led() = 0;
 
-    // Switch on the LED signalling UART RX
-    // activity to the target. After the
-    // follow-up time, the LED is switched
-    // off automatically.
+    /**
+     * @brief Switch on the LED signalling UART RX activity to the target.
+     *
+     * After the follow-up time, the LED is switched off automatically.
+     */
     virtual void trigger_uart_rx_led() = 0;
 
-    // Switch on/off the LED signalling the
-    // connection status between debugger and target.
+    /**
+     * @brief Switch on/off the LED signalling the connection status.
+     *
+     * The LED shows the connection status between debugger and target.
+     */
     virtual void set_connected_led(bool val) = 0;
 
-    // Switch on/off the LED signalling the
-    // 'target running' status
+    /**
+     * @brief Switch on/off the LED signalling the 'target running' status.
+     */
     virtual void set_running_led(bool val) = 0;
 
-    // Show a 'welcome' LED pattern
+    /**
+     * @brief Show a 'welcome' LED pattern.
+     */
     virtual void welcome() = 0;
 };
 

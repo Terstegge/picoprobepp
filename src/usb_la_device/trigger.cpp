@@ -6,13 +6,13 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-#include "la_trigger.h"
+#include "trigger.h"
 #include "RP2040.h"
 
 using namespace _IO_BANK0_;
 using namespace _SIO_;
 
-bool la_trigger::set(const trigger_type t, const uint8_t gpio) {
+bool trigger::set(const trigger_type t, const uint8_t gpio) {
     // Edge triggers can only be set once!
     if (_trigger_type > 2) return false;
     _trigger_type = t;
@@ -50,7 +50,7 @@ bool la_trigger::set(const trigger_type t, const uint8_t gpio) {
     return true;
 }
 
-void la_trigger::reset() {
+void trigger::reset() {
     // Reset all values
     _trigger_type = NONE;
     _mask  = 0;
@@ -58,7 +58,7 @@ void la_trigger::reset() {
     _reg   = nullptr;
 }
 
-void COPY_TO_RAM la_trigger::wait() const {
+void COPY_TO_RAM trigger::wait() const {
     // Fast exit if no trigger type was set
     if (_trigger_type == NONE) return;
     // Reset edge triggers before detection

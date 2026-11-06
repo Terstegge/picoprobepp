@@ -23,17 +23,19 @@
 #include "usb_ms_func_subset.h"
 #include "usb_ms_compatible_ID.h"
 #include "usb_ms_registry_property.h"
-using enum TUPP::wPropertyDataType_t;
+using enum wPropertyDataType_t;
 
-#include "usb_dap_device.h"
 #include "usb_uart_device.h"
 #include "usb_cdc_acm_adapter.h"
+#include "usb_log.h"
+
+#include "usb_dap_device.h"
 #include "DAP_hw_pio.h"
 #include "DAP_hw_gpio.h"
 #include "DAP_log.h"
+
 #include "usb_la_device.h"
-#include "la_protocol.h"
-#include "usb_log.h"
+#include "LA_protocol.h"
 
 #include "posix_io.h"
 #include "task.h"
@@ -103,12 +105,12 @@ int main() {
 
     #ifdef LA_SUPPORT
     // Set up Logic Analyzer (USB part and protocol processing)
-    usb_la_device la(controller, config);
+    usb_la_device la_device(controller, config);
+    la_device.sign_up();
+    la_device.setPriority(80);
+    LA_protocol la(la_device);
     la.sign_up();
     la.setPriority(80);
-    la_protocol la_protocol(la);
-    la_protocol.sign_up();
-    la_protocol.setPriority(80);
     #endif
 
     // Optional: Set up another CDC ACM device for debugging the debugger
@@ -142,10 +144,10 @@ int main() {
 
     // LED handlers - connect UART/DAP callbacks to the LEDs
     DAP_led leds;
-    usb_uart_device::uart_tx_cb = [&]()       { leds.trigger_uart_tx_led(); };
-    usb_uart_device::uart_rx_cb = [&]()       { leds.trigger_uart_rx_led(); };
-    DAP_Protocol::connected_cb  = [&](bool v) { leds.set_connected_led(v);  };
-    DAP_Protocol::running_cb    = [&](bool v) { leds.set_running_led(v);    };
+    usb_uart_device::uart_tx_cb = [&]          { leds.trigger_uart_tx_led(); };
+    usb_uart_device::uart_rx_cb = [&]          { leds.trigger_uart_rx_led(); };
+    DAP_Protocol::connected_cb  = [&] (bool v) { leds.set_connected_led(v);  };
+    DAP_Protocol::running_cb    = [&] (bool v) { leds.set_running_led(v);    };
 
     // Optional: YAHAL Task Monitor
     #ifdef START_TASK_MONITOR

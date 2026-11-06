@@ -6,10 +6,12 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Wrapper class to convert an usb_cdc_acm_device into
-// an uart_data_interface, so it e.g. can be used for
-// posix_io character input/output.
-//
+/**
+ * @file usb_cdc_acm_adapter.h
+ * @brief Wrapper class converting a usb_cdc_acm_device into a uart_data_interface.
+ *
+ * This allows it to be used e.g. for posix_io character input/output.
+ */
 #ifndef USB_CDC_ACM_ADAPTER_H
 #define USB_CDC_ACM_ADAPTER_H
 
@@ -17,23 +19,40 @@
 #include "usb_cdc_acm_device.h"
 #include "uart_data_interface.h"
 
+/**
+ * @brief Convert a usb_cdc_acm_device into a uart_data_interface.
+ */
 class usb_cdc_acm_adapter : public usb_cdc_acm_device, public uart_data_interface {
 public:
 
+    /**
+     * @brief Construct the CDC ACM adapter.
+     * @param controller USB device controller used to create the endpoints.
+     * @param conf USB configuration the CDC ACM interface is added to.
+     */
     usb_cdc_acm_adapter(usb_device_controller & controller, usb_configuration & conf)
     : usb_cdc_acm_device(controller, conf) {
     }
 
+    /**
+     * @brief Check whether received data is available.
+     */
     bool available() override {
         return usb_cdc_acm_device::available() > 0;
     }
 
+    /**
+     * @brief Read a single character.
+     */
     char getc() override {
         uint8_t c {0};
         usb_cdc_acm_device::read(&c, 1);
         return c;
     }
 
+    /**
+     * @brief Write a single character.
+     */
     void putc(char c) override {
         uint32_t sent = usb_cdc_acm_device::write((uint8_t *)&c, 1);
         while (sent != 1) {
@@ -42,7 +61,9 @@ public:
         }
     }
 
-    // Interrupt handling not supported
+    /**
+     * @brief Interrupt handling is not supported.
+     */
     void uartAttachIrq (function<void(char)> ) override { };
     void uartDetachIrq () override { };
     void uartEnableIrq () override { };

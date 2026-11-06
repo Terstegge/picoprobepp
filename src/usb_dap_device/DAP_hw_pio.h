@@ -6,12 +6,15 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// DAP HW implementation for the RP2040 MCU using
-// a PIO program for increased performance. See
-// DAP_hw_interface.h for more information.
-// On RR2350 A2, this code seems not to run due to the E9 bug.
-// Tests with the A4 version are planned.
-//
+/**
+ * @file DAP_hw_pio.h
+ * @brief DAP HW implementation for the RP2040 MCU using a PIO program.
+ *
+ * This implementation uses a PIO program for increased performance.
+ * See DAP_hw_interface.h for more information.
+ * On RP2350 A2, this code seems not to run due to the E9 bug.
+ * Tests with the A4 version are planned.
+ */
 #ifndef DAP_HW_PIO_H
 #define DAP_HW_PIO_H
 
@@ -25,9 +28,15 @@
 using namespace _SIO_;
 using namespace _IO_BANK0_;
 
+/**
+ * @brief DAP HW implementation for the RP2040 MCU using a PIO program.
+ */
 class DAP_hw_pio : public DAP_hw_interface {
 public:
 
+    /**
+     * @brief Construct the PIO based DAP HW backend.
+     */
     explicit DAP_hw_pio()
     : _swdio_tms(GPIO_SWDIO_TMS), _swclk_tck(GPIO_SWCLK_TCK),
       _tdi(GPIO_TDI), _tdo(GPIO_TDO), _reset(GPIO_RESET) {

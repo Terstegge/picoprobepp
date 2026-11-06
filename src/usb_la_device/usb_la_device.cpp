@@ -74,10 +74,16 @@ usb_la_device::usb_la_device(usb_device_controller & controller,
         switch(pkt->bRequest) {
             case bRequest_t::REQ_CDC_SET_LINE_CODING:
                 controller.handler = [&](const uint8_t *, uint16_t) {};
-                controller._ep0_out->start_transfer(reinterpret_cast<uint8_t *>(&_line_coding), sizeof(_line_coding));
+                controller._ep0_out->start_transfer(
+                    reinterpret_cast<uint8_t *>(&_line_coding),
+                    sizeof(_line_coding)
+                );
                 break;
             case bRequest_t::REQ_CDC_GET_LINE_CODING:
-                controller._ep0_in->start_transfer(reinterpret_cast<uint8_t *>(&_line_coding), sizeof(_line_coding));
+                controller._ep0_in->start_transfer(
+                    reinterpret_cast<uint8_t *>(&_line_coding),
+                    sizeof(_line_coding)
+                );
                 break;
             case bRequest_t::REQ_CDC_SET_CONTROL_LINE_STATE:
             case bRequest_t::REQ_CDC_SEND_BREAK:

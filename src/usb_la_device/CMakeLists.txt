@@ -1,8 +1,8 @@
 target_sources(picoprobe++ PRIVATE
         usb_la_device.cpp
-        la_capture.cpp
-        la_protocol.cpp
-        la_trigger.cpp
+        capture.cpp
+        LA_protocol.cpp
+        trigger.cpp
 )
 
 target_include_directories(picoprobe++

@@ -6,9 +6,10 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// DAP HW implementation for the RP2xxx MCU using
-// simple bit banging.
-//
+/**
+ * @file DAP_hw_gpio.h
+ * @brief DAP HW implementation for the RP2xxx MCU using simple bit banging.
+ */
 #ifndef DAP_HW_GPIO_H
 #define DAP_HW_GPIO_H
 
@@ -18,16 +19,22 @@
 #include "DAP_log.h"
 using namespace _SIO_;
 
-class DAP_hw_gpio : public DAP_hw_interface {
+/**
+ * @brief DAP HW implementation for the RP2xxx MCU using simple bit banging.
+ */
+class DAP_hw_gpio final : public DAP_hw_interface {
 public:
 
+    /**
+     * @brief Construct the bit-banging DAP HW backend.
+     */
     explicit DAP_hw_gpio()
     : _swdio_tms(GPIO_SWDIO_TMS), _swclk_tck(GPIO_SWCLK_TCK),
       _reset(GPIO_RESET), _tdi(GPIO_TDI), _tdo(GPIO_TDO) {
         DAP_LOG(DAP_log::LOG_DEBUG, "DAP_hw_gpio()");
     }
 
-    inline void cycle_swclk_tck() {
+    void cycle_swclk_tck() {
         swclk_tck_set(true);
         delay_edge();
         swclk_tck_set(false);
@@ -38,25 +45,30 @@ public:
     // Timing configuration methods
     ///////////////////////////////
 
-    // Set HW frequency in Hz, which drives the SWCLK/TCK Pin.
-    inline void frequency_set(uint32_t f) override {
+    /**
+     * @brief Set HW frequency in Hz, which drives the SWCLK/TCK pin.
+     */
+    void frequency_set(const uint32_t f) override {
         DAP_LOG(DAP_log::LOG_DEBUG, "frequency_set(%d)", f);
         _frequency = f;
     }
 
-    // Delay for a number of microseconds, which is
-    // used at some places in the CMSIS DAP protocol.
-    void delay_us(uint32_t us) override {
+    /**
+     * @brief Delay for a number of microseconds.
+     *
+     * This is used at some places in the CMSIS DAP protocol.
+     */
+    void delay_us(const uint32_t us) override {
         task::sleep_us(us);
     }
 
-    inline constexpr bool test_domain_timer_support() override {
+    constexpr bool test_domain_timer_support() override {
         return true;
     }
-    inline uint32_t test_domain_timer_frequency() override {
+    uint32_t test_domain_timer_frequency() override {
         return 1000000;
     }
-    inline uint32_t test_domain_timer_get() override {
+    uint32_t test_domain_timer_get() override {
         return task::micros();
     }
 
@@ -64,8 +76,11 @@ public:
     // Pin configuration methods
     ////////////////////////////
 
-    // Set up all needed HW Pins for JTAG operation
-    // (TCK, TMS, TDI, TDO and optionally nTRST and nRESET)
+    /**
+     * @brief Set up all needed HW pins for JTAG operation.
+     *
+     * This configures TCK, TMS, TDI, TDO and optionally nTRST and nRESET.
+     */
     void connect_jtag_pins() override {
         DAP_LOG(DAP_log::LOG_DEBUG, "connect_jtag_pins()");
         _swclk_tck.gpioMode(GPIO::INPUT | GPIO::OUTPUT);
@@ -75,8 +90,11 @@ public:
         _tdo.gpioMode      (GPIO::INPUT);
     }
 
-    // Set up all needed HW Pins for SWD operation
-    // (SWCLK, SWDIO and optionally nRESET)
+    /**
+     * @brief Set up all needed HW pins for SWD operation.
+     *
+     * This configures SWCLK, SWDIO and optionally nRESET.
+     */
     void connect_swd_pins() override {
         DAP_LOG(DAP_log::LOG_DEBUG, "connect_swd_pins()");
         _swclk_tck.gpioMode(GPIO::INPUT | GPIO::OUTPUT);
@@ -84,8 +102,9 @@ public:
         _reset.gpioMode    (GPIO::INPUT | GPIO::OUTPUT | GPIO::INIT_HIGH);
     }
 
-    // De-configure all SWD/JTAG Pins and put them
-    // into a high-Z state
+    /**
+     * @brief De-configure all SWD/JTAG pins and put them into a high-Z state.
+     */
     void disconnect() override {
         DAP_LOG(DAP_log::LOG_DEBUG, "disconnect()");
         _swclk_tck.gpioMode(GPIO::INPUT);
@@ -99,12 +118,14 @@ public:
     // Common operation methods
     ///////////////////////////
 
-    // Method for toggling the SWCLK/TCK line for a
-    // certain amount of cycles. Used by SWD and JTAG.
-    // Starting level of the SWCLK/TCK line is LOW,
-    // so ony cycle is a -> HIGH -> LOW transition
-    // (using the configured frequency).
-    inline void clock_cycle(uint16_t cycles) override {
+    /**
+     * @brief Toggle the SWCLK/TCK line for a certain amount of cycles.
+     *
+     * This is used by SWD and JTAG. The starting level of the
+     * SWCLK/TCK line is LOW, so one cycle is a LOW -> HIGH -> LOW
+     * transition (using the configured frequency).
+     */
+    void clock_cycle(uint16_t cycles) override {
         DAP_LOG(DAP_log::LOG_DEBUG, "swclk_cycle(%d)", cycles);
         while (cycles--) {
             cycle_swclk_tck();
@@ -115,7 +136,7 @@ public:
     // SWD read write methods
     /////////////////////////
 
-    inline uint32_t swd_read(uint8_t size) override {
+    uint32_t swd_read(uint8_t size) override {
         DAP_LOG(DAP_log::LOG_DEBUG, "swd_read(%d)", size);
         swd_swdio_enable_output(false);
         uint32_t value = 0;
@@ -129,7 +150,7 @@ public:
         return value;
     }
 
-    inline void swd_write(uint32_t value, uint8_t size ) override {
+    void swd_write(uint32_t value, uint8_t size ) override {
         DAP_LOG(DAP_log::LOG_DEBUG, "swd_write(0x%x, %d)", value, size);
         swd_swdio_enable_output(true);
         for (uint8_t i = 0; i < size; i++) {
@@ -149,7 +170,7 @@ public:
     // JTAG read write methods
     //////////////////////////
 
-    inline uint32_t jtag_read(uint8_t size) override {
+    uint32_t jtag_read(uint8_t size) override {
         DAP_LOG(DAP_log::LOG_DEBUG, "jtag_read(%d)", size);
         uint32_t value = 0;
         uint32_t bit;
@@ -162,7 +183,7 @@ public:
         return value;
     }
 
-    inline uint32_t jtag_write(uint32_t value, uint8_t size) override {
+    uint32_t jtag_write(uint32_t value, uint8_t size) override {
         DAP_LOG(DAP_log::LOG_DEBUG, "jtag_write(0x%x, %d)", value, size);
         for (uint8_t i = 0; i < size; i++) {
             tdi_set(value & 1);
@@ -173,7 +194,7 @@ public:
         return value;
     }
 
-    inline uint32_t jtag_read_write(uint32_t value, uint8_t size) override {
+    uint32_t jtag_read_write(uint32_t value, uint8_t size) override {
         DAP_LOG(DAP_log::LOG_DEBUG, "jtag_read_write(0x%x, %d)", value, size);
         uint32_t read_value = 0;
         uint32_t bit;
@@ -192,14 +213,16 @@ public:
     // Direct SWD/JTAG Pin access
     /////////////////////////////
 
-    // When using bit-banging, this method will wait
-    // the correct amount of time to achieve the needed
-    // frequency of the SWCLK/TCK signal. Because this
-    // method is called after every SWCLK/TCK edge, half
-    // of the period duration of the currently selected
-    // frequency is needed. So when e.g. the frequency is
-    // set to 1MHz, this method would wait approx. 500ns.
-
+    /**
+     * @brief Wait for the correct amount of time between SWCLK/TCK edges.
+     *
+     * When using bit-banging, this method will wait the correct amount
+     * of time to achieve the needed frequency of the SWCLK/TCK signal.
+     * Because this method is called after every SWCLK/TCK edge, half of
+     * the period duration of the currently selected frequency is needed.
+     * So when e.g. the frequency is set to 1MHz, this method would wait
+     * approx. 500ns.
+     */
     inline void delay_edge() {
         // We don't delay after a SWCLK edge
         // -> maximum speed :)
@@ -215,21 +238,21 @@ public:
         return SIO.GPIO_IN & (1 << GPIO_SWDIO_TMS);
     }
 
-    inline void swclk_tck_set(bool v) override {
+    void swclk_tck_set(bool v) override {
         if (v) SIO.GPIO_OUT_SET = (1 << GPIO_SWCLK_TCK);
         else   SIO.GPIO_OUT_CLR = (1 << GPIO_SWCLK_TCK);
     }
 
-    inline bool swclk_tck_get() override {
+    bool swclk_tck_get() override {
         return SIO.GPIO_IN & (1 << GPIO_SWCLK_TCK);
     }
 
-    inline void tdi_set(bool v) override {
+    void tdi_set(bool v) override {
         if (v) SIO.GPIO_OUT_SET = (1 << 16);
         else   SIO.GPIO_OUT_CLR = (1 << 16);
     }
 
-    inline bool tdi_get() override {
+    bool tdi_get() override {
         return SIO.GPIO_IN & (1 << 16);
     }
 

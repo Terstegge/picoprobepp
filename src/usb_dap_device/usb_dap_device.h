@@ -6,12 +6,15 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Simple USB client class providing two bulk endpoints to
-// be used with the CMSIS DAP v2 protocol. Requests are
-// buffered in a FIFO. Synchronization of USB handlers and
-// the task code is done with suspend/resume. A condition
-// variable would also work, but causes more overhead.
-//
+/**
+ * @file usb_dap_device.h
+ * @brief Simple USB client class for the CMSIS DAP v2 protocol.
+ *
+ * Provides two bulk endpoints to be used with the CMSIS DAP v2
+ * protocol. Requests are buffered in a FIFO. Synchronization of
+ * USB handlers and the task code is done with suspend/resume. A
+ * condition variable would also work, but causes more overhead.
+ */
 #ifndef USB_DAP_DEVICE_H
 #define USB_DAP_DEVICE_H
 
@@ -23,37 +26,60 @@
 #include "DAP_protocol.h"
 #include "task.h"
 
+/**
+ * @brief USB client task providing the CMSIS DAP v2 bulk interface.
+ */
 class usb_dap_device : public task {
 public:
 
+    /**
+     * @brief Construct the CMSIS DAP USB device task.
+     * @param controller USB device controller used to create the endpoints.
+     * @param configuration USB configuration the DAP interface is added to.
+     * @param dap DAP protocol instance used to process requests.
+     */
     usb_dap_device(usb_device_controller & controller,
                    usb_configuration & configuration,
                    DAP_Protocol & dap);
 
-    // The task code
+    /**
+     * @brief The task code.
+     */
     [[noreturn]] void run() override;
 
-    // Read only version of interface descriptor
-    const usb_interface &   interface_dap;
+    /**
+     * @brief Read only version of the interface descriptor.
+     */
+    const usb_interface & interface_dap;
 
 private:
 
-    // The DAP protocol instance
+    /**
+     * @brief The DAP protocol instance.
+     */
     DAP_Protocol & _dap;
 
-    // USB CMSIS DAP descriptor tree
+    /**
+     * @brief USB CMSIS DAP descriptor tree.
+     */
     usb_configuration & _configuration;
     usb_interface _if_dap {_configuration};
 
-    // USB endpoints
+    /**
+     * @brief USB endpoints.
+     */
     usb_endpoint * _ep_dap_in  {nullptr};
     usb_endpoint * _ep_dap_out {nullptr};
 
-    // FIFOs for receive/transmit data
+    /**
+     * @brief FIFOs for receive/transmit data.
+     */
     fifo<usb_buf_t, DAP_MAX_PACKET_COUNT> _received_data;
     fifo<usb_buf_t, DAP_MAX_PACKET_COUNT> _transmit_data;
 
-    // Internal USB data buffers
+    /**
+     * @brief Internal USB data buffers.
+     */
     usb_buf_t _buffer_out;
     usb_buf_t _buffer_in;
 };

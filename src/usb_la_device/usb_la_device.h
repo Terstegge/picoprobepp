@@ -63,7 +63,7 @@ public:
      * @brief Queue a block of data to be sent to the host.
      * This will typically be sample data. The data array
      * is not copied - only the pointer to the data and the
-     * length are stored. If a RLE compression is applied,
+     * length are stored. If RLE compression is applied,
      * the compressed data is stored in-place (using the
      * same buffer as the original data array).
      * @param data Pointer to the byte array to be sent.

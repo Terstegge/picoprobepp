@@ -6,68 +6,65 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// Implementation of LEDs for the RPi Pico and Pico2. There is
-// only one (green) LED available, so UART activity is not shown.
-//
+/**
+ * @file DAP_led_rpi_pico.h
+ * @brief LED implementation for the RPi Pico and Pico2.
+ *
+ * There is only one (green) LED available, so UART activity is
+ * not shown.
+ */
 #ifndef DAP_LED_RPI_PICO_H
 #define DAP_LED_RPI_PICO_H
 
-#include <cstdint>
 #include "config.h"
 #include "DAP_led_interface.h"
-#include "task.h"
 
+/**
+ * @brief LED implementation for the RPi Pico and Pico2.
+ */
 class DAP_led_rpi_pico : public DAP_led_interface {
 public:
-    DAP_led_rpi_pico() {
-        // Set LED to output
-        _led.gpioMode(GPIO::OUTPUT);
-        // This timer will blink the LED
-        _blink_timer.setPeriod(50000, TIMER::PERIODIC);
-        _blink_timer.setCallback([&] () {
-            _led.gpioToggle();
-        });
-    }
+    /**
+     * @brief Construct the RPi Pico LED handler.
+     */
+    DAP_led_rpi_pico();
 
-    // UART signalling not implemented
-    void trigger_uart_tx_led() override { }
-    void trigger_uart_rx_led() override { }
+    /**
+     * @brief UART TX LED signalling is not implemented.
+     */
+    void trigger_uart_tx_led() override;
 
-    // Switch on/off the LED, signalling the
-    // connection status between debugger and target.
-    inline void set_connected_led(bool val) override {
-        if (val) _just_connected = true;
-        _led = val;
-        _connected = val;
-    }
+    /**
+     * @brief UART RX LED signalling is not implemented.
+     */
+    void trigger_uart_rx_led() override;
 
-    // Switch on/off LED blinking, signalling the
-    // 'target running' status
-    inline void set_running_led(bool val) override {
-        if (_just_connected) {
-            // Ignore the first switch-on from openocd...
-            _just_connected = false;
-        } else {
-            if (val) {
-                _blink_timer.start();
-            } else {
-                _blink_timer.stop();
-                _led = _connected;
-            }
-        }
-    }
+    /**
+     * @brief Switch on/off the LED signalling the connection status.
+     *
+     * The LED shows the connection status between debugger and target.
+     */
+    void set_connected_led(bool val) override;
 
-    void welcome() override {
-        for(int i=1; i < 3; ++i) {
-            _led = (bool)(i % 2);
-            task::sleep_ms(200);
-        }
-    }
+    /**
+     * @brief Switch on/off LED blinking for the 'target running' status.
+     */
+    void set_running_led(bool val) override;
+
+    /**
+     * @brief Show a 'welcome' LED pattern.
+     */
+    void welcome() override;
 
 private:
+    /// LED used for all status signalling.
     gpio_rp2xxx   _led{LED_GPIO};
+    /// Timer blinking the LED while the target is running.
     timer_rp2xxx  _blink_timer;
+
+    /// Flag for detecting the first setting of the 'running' state.
     bool          _just_connected {false};
+    /// Last connection state, used to restore the LED after blinking.
     bool          _connected {false};
 };
 

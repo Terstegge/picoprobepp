@@ -1,14 +1,20 @@
-#include "la_protocol.h"
+#include "LA_protocol.h"
 #include "usb_log.h"
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
 
-la_protocol::la_protocol(usb_la_device & usb)
+LA_protocol::LA_protocol(usb_la_device & usb)
 : task("LA PROTOCOL"), _usb(usb) {
     _capture.data_handler = [&](uint8_t* data, size_t len) -> void {
+
+        if (*data != *(data+len-1)) {
+            TUPP_LOG(LOG_ERROR, "Buffer data DIFFERENT");
+        }
+
+        //TUPP_LOG(LOG_INFO, "Data Handler Data:%x, Len:%d", data, len);
         // for (size_t i = 0; i < len; i++) {
-        //     if (i%10) {
+        //     if (i%5) {
         //         data[i] = 0x0c;
         //     } else {
         //         data[i] = 0x03;
@@ -16,10 +22,11 @@ la_protocol::la_protocol(usb_la_device & usb)
         // }
         size_t rle_len = write_rle4_data(data, len);
         _usb.queue_block(data, rle_len);
+        _total_bytes_sent += rle_len;
     };
 }
 
-[[noreturn]] void la_protocol::run() {
+[[noreturn]] void LA_protocol::run() {
     while(true) {
         size_t cmd_index {0};
         char c {0};
@@ -118,6 +125,9 @@ la_protocol::la_protocol(usb_la_device & usb)
                 _capture_config.analog_channel_base         = LA_A_CHANNEL_START;
                 _capture_config.number_of_analog_channels   = 0;
 
+                _total_bytes_sent = 0;
+
+
                 bool res = _capture.start(&_capture_config);
                 if (!res) {
                     TUPP_LOG(LOG_ERROR, "Capture start() returned false!!");
@@ -133,7 +143,8 @@ la_protocol::la_protocol(usb_la_device & usb)
                 task::sleep_ms(50);
 
                 char buf[20];
-                sprintf(buf, "$%ld+", _capture_config.post_trigger_samples);
+                sprintf(buf, "$%d+", _total_bytes_sent);
+                TUPP_LOG(LOG_INFO, "Sending final byte count '%s'", buf);
                 _usb.write_response(buf);
 
                 TUPP_LOG(LOG_INFO, "End Sampling...");
@@ -218,17 +229,17 @@ la_protocol::la_protocol(usb_la_device & usb)
                 uint8_t stage = 1;
                 TUPP_LOG(LOG_INFO, "Setting Trigger %c on Channel %d", _cmd_str[1], channel);
                 switch (_cmd_str[1]) {
-                    case '0': _capture_config.trigger_stages[0].set(LEVEL_LOW,
-                                channel+LA_D_CHANNEL_START);
+                    case '0': _capture_config.trigger_stages[0].
+                                set(LEVEL_LOW, channel+LA_D_CHANNEL_START);
                         break;
-                    case '1': _capture_config.trigger_stages[0].set(LEVEL_HIGH,
-                                channel+LA_D_CHANNEL_START);
+                    case '1': _capture_config.trigger_stages[0].
+                                set(LEVEL_HIGH, channel+LA_D_CHANNEL_START);
                         break;
-                    case '2': _capture_config.trigger_stages[stage++].set(RISING,
-                                channel+LA_D_CHANNEL_START);
+                    case '2': _capture_config.trigger_stages[stage++].
+                                set(RISING, channel+LA_D_CHANNEL_START);
                         break;
-                    case '3': _capture_config.trigger_stages[stage++].set(FALLING,
-                                channel+LA_D_CHANNEL_START);
+                    case '3': _capture_config.trigger_stages[stage++].
+                                set(FALLING, channel+LA_D_CHANNEL_START);
                         break;
                     case '4': _capture_config.trigger_stages[stage++].set(EDGE,
                                 channel+LA_D_CHANNEL_START);
@@ -295,9 +306,10 @@ la_protocol::la_protocol(usb_la_device & usb)
             _usb.write_response(_resp_str.data());
         }
     }
+    TUPP_LOG(LOG_INFO, "Leaving protocol loop");
 }
 
-size_t COPY_TO_RAM la_protocol::write_rle4_data(uint8_t * data, size_t len) {
+size_t COPY_TO_RAM LA_protocol::write_rle4_data(uint8_t * data, size_t len) {
     if (data == nullptr || len == 0) return 0;
     uint8_t * write_ptr = data;
     //TUPP_LOG(LOG_INFO, "Data Handler Buf %x Size %d", data, len);
@@ -322,7 +334,7 @@ size_t COPY_TO_RAM la_protocol::write_rle4_data(uint8_t * data, size_t len) {
     return write_ptr - data;
 }
 
-void COPY_TO_RAM la_protocol::write_rle4_sample(uint8_t * & write_ptr, size_t rle_count, uint8_t next) {
+void COPY_TO_RAM LA_protocol::write_rle4_sample(uint8_t * & write_ptr, size_t rle_count, uint8_t next) {
     size_t div=0, mod=0;
     // Check if the last sample was repeated at all
     if (rle_count) {

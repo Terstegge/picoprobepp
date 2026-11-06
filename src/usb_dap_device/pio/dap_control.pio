@@ -6,55 +6,56 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// PIO code for handling the CMSIS DAP SWD protocol. Every operation
-// starts with a command word, which is written to the TX FIFO. The
-// structure of this word is:
-//
-//        |  31:13 | 12:8 |   7:0  |
-//        | unused |  PC  |  Count |
-//
-// Count specifies the number of bits to read/write or the number of
-// clock cycles MINUS one (a value of 0 will e.g. write one bit, 1 will
-// write two bits, and so on)!
-// PC specifies the command to execute by its PC offset relative to the
-// load address of the PIO program. Available commands are:
-//
-// read
-// ====
-// Read 'Count+1' (1..32) bits from SWDIO/TDO. The result will be
-// pushed to the RX FIFO. For SWD, the SWDIO line has to be set to
-// input mode before!
-//
-// write
-// =====
-// Write 'Count+1' (1..32) bits to SWDIO. The data word to write
-// is written to the TX FIFO after the command word. For SWD, the
-// SWDIO line has to be set to output mode before!
-//
-// read_write
-// ==========
-// Combination of read and write, only used in JTAG mode when TDI
-// and TDO can be used in parallel. Not usable in SWD mode because
-// we have only one data line (SWDIO), which is either input OR
-// output!
-//
-// cycle
-// =====
-// Cycle the SWCLK line for 'Count+1' times.
-//
-// In SWD mode:
-// SWDIO is controlled with 'in'/'out' and 'set' instructions.
-// SWCLK is controlled with a sideset bit.
-//
-// In JTAG mode:
-// TMS is controlled with 'set' instructions
-// TCK is controlled with a sideset bit.
-// TDI is controlled with 'out' instructions
-// TDO is controlled with 'in'  instructions
-//
-// The PIO program uses four SM cycles per SWCLK/TCK cycle. E.g. a
-// SM clock of 1MHz will result in a 250kHz SWCLK/TCK frequency!
-//
+/**
+ * @file dap_control.pio
+ * @brief PIO program for handling the CMSIS DAP SWD protocol.
+ *
+ * Every operation starts with a command word, which is written to the
+ * TX FIFO. The structure of this word is:
+ *
+ * @verbatim
+ *        |  31:13 | 12:8 |   7:0  |
+ *        | unused |  PC  |  Count |
+ * @endverbatim
+ *
+ * Count specifies the number of bits to read/write or the number of
+ * clock cycles MINUS one (a value of 0 will e.g. write one bit, 1 will
+ * write two bits, and so on)!
+ * PC specifies the command to execute by its PC offset relative to the
+ * load address of the PIO program. Available commands are:
+ *
+ * @par read
+ * Read 'Count+1' (1..32) bits from SWDIO/TDO. The result will be
+ * pushed to the RX FIFO. For SWD, the SWDIO line has to be set to
+ * input mode before!
+ *
+ * @par write
+ * Write 'Count+1' (1..32) bits to SWDIO. The data word to write
+ * is written to the TX FIFO after the command word. For SWD, the
+ * SWDIO line has to be set to output mode before!
+ *
+ * @par read_write
+ * Combination of read and write, only used in JTAG mode when TDI
+ * and TDO can be used in parallel. Not usable in SWD mode because
+ * we have only one data line (SWDIO), which is either input OR
+ * output!
+ *
+ * @par cycle
+ * Cycle the SWCLK line for 'Count+1' times.
+ *
+ * In SWD mode:
+ * SWDIO is controlled with 'in'/'out' and 'set' instructions.
+ * SWCLK is controlled with a sideset bit.
+ *
+ * In JTAG mode:
+ * TMS is controlled with 'set' instructions
+ * TCK is controlled with a sideset bit.
+ * TDI is controlled with 'out' instructions
+ * TDO is controlled with 'in'  instructions
+ *
+ * The PIO program uses four SM cycles per SWCLK/TCK cycle. E.g. a
+ * SM clock of 1MHz will result in a 250kHz SWCLK/TCK frequency!
+ */
 .define PUBLIC SM_CYCLES_PER_DAP_CLK 4
 .program dap_control
 .side_set 1 opt
@@ -106,7 +107,9 @@ public execute:
 
 #include <memory>
 
-// JTAG/SWD PIO command structure
+/**
+ * @brief JTAG/SWD PIO command structure.
+ */
 union __attribute__((__packed__)) swd_cmd_t {
     struct __attribute__((__packed__)) {
         uint32_t len    : 8;
