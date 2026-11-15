@@ -43,10 +43,10 @@ usb_la_device::usb_la_device(usb_device_controller & controller,
     _call_mgmt_fd.set_bDataInterface(_if_data.descriptor.bInterfaceNumber);
 
     _acm_fd.set_bmCapabilities({
-        .comm_feature_support           = 0,
-        .line_coding_support            = 1,
-        .send_break_support             = 1,
-        .network_connection_support     = 0
+        .comm_feature_support       = 0,
+        .line_coding_support        = 1,
+        .send_break_support         = 1,
+        .network_connection_support = 0
     });
 
     _union_fd.set_bControlInterface     (_if_ctrl.descriptor.bInterfaceNumber);
@@ -129,9 +129,7 @@ bool usb_la_device::queue_block(uint8_t* data, const size_t len) {
     TUPP_LOG(LOG_DEBUG, "queue_block()", this);
     const la_block_t block = {data, len};
     const bool success = _transmit_queue.put(block);
-    if (success) {
-        resume();
-    }
+    if (success) resume();
     return success;
 }
 

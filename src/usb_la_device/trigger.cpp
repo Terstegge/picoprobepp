@@ -40,7 +40,6 @@ bool trigger::set(const trigger_type t, const uint8_t gpio) {
             _reg   = reinterpret_cast<uint32_t *>
                      (&IO_BANK0.INTR0 + (gpio >> 3) + SIO.CPUID * 12);
             _mask  = static_cast<uint32_t>(t) << ((gpio & 0x7) * 4);
-            _value = _mask;
             break;
         }
         case NONE: {
@@ -48,6 +47,10 @@ bool trigger::set(const trigger_type t, const uint8_t gpio) {
         }
     }
     return true;
+}
+
+bool trigger::is_set() const {
+    return (_trigger_type != NONE);
 }
 
 void trigger::reset() {
@@ -61,8 +64,13 @@ void trigger::reset() {
 void COPY_TO_RAM trigger::wait() const {
     // Fast exit if no trigger type was set
     if (_trigger_type == NONE) return;
-    // Reset edge triggers before detection
-    if (_trigger_type > LEVEL_HIGH) *_reg = _mask;
-    // Loop until trigger fires
-    while ((*_reg & _mask) != _value) { }
+    if (_trigger_type > LEVEL_HIGH) {
+        // Reset edge triggers
+        *_reg = _mask;
+        // Loop until edge trigger matches
+        while ((*_reg & _mask) == 0) { }
+    } else {
+        // Loop until state trigger matches
+        while ((*_reg & _mask) != _value) { }
+    }
 }

@@ -46,6 +46,12 @@ public:
     bool set(trigger_type t, uint8_t gpio);
 
     /**
+     * @brief: Check if trigger is set
+     * @return true is trigger is set
+     */
+    bool is_set() const;
+
+    /**
      * @brief  Reset a trigger to its inactive (default) state.
      */
     void reset();
