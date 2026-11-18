@@ -67,25 +67,25 @@ usb_uart_device::usb_uart_device(usb_device_controller &ctrl,
         _uart.setBaudrate(lineCoding.dwDTERate);
     };
 
-    control_line_handler = ([&](bool dtr, bool rts) {
+    control_line_handler = [&](const bool dtr, const bool rts) {
         // The DTR control line gives us a hint if there
         // is some application consuming the data on host side
         _dtr = dtr;
         // Set signals on hardware level
         _uart.setDTR(dtr);
         _uart.setRTS(rts);
-    });
+    };
 
-    break_handler = ([&](uint16_t millis) {
+    break_handler = [&](const uint16_t millis) {
         _uart.sendBreak(millis);
-    });
+    };
 
-    received_handler = ([&]() {
+    received_handler = [&] {
         // We received data from host -> activate the processing task
         resume();
-    });
+    };
 
-    _uart.uartAttachIrq([&](char c) {
+    _uart.uartAttachIrq([&](const char c) {
         // When DTR is low and host did not send any data recently
         // there might not be any consumer on host side. So simply
         // throw away data in this case.
@@ -97,18 +97,18 @@ usb_uart_device::usb_uart_device(usb_device_controller &ctrl,
 
     // Set up timer for detecting host activity
     _host_active_timer.setPeriod(HOST_ACTIVE_TIMEOUT_US, TIMER::ONE_SHOT);
-    _host_active_timer.setCallback([&] () {
+    _host_active_timer.setCallback([&] {
         _host_active = false;
     });
 }
 
-void usb_uart_device::set_dcd_dtr(bool dcd, bool dsr) {
+void usb_uart_device::set_dcd_dtr(const bool dcd, const bool dsr) {
     // Send DCD and DSR signals to host PC side
     CDC::bmUartState_t uart_state;
     uart_state.bRxCarrier_DCD = dcd;
     uart_state.bTxCarrier_DSR = dsr;
     while (!notify_serial_state( uart_state )) {
-        task::sleep_ms(20);
+        sleep_ms(20);
     }
 }
 
@@ -118,7 +118,7 @@ void usb_uart_device::run() {
         // When a new characters arrive within 10ms, the task
         // stays in the READY state, and we do not waste time
         // in other tasks.
-        uint64_t until = millis() + 10;
+        const uint64_t until = millis() + 10;
         while (millis() < until) {
             if (available() || _tx_buffer.available_get()) break;
         }

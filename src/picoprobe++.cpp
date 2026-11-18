@@ -6,11 +6,12 @@
 // A CMSIS-DAP v2 firmware for RP2040/RP2350 based debug probes
 ///////////////////////////////////////////////////////////////
 //
-// picoprobe++ main code. Not so much to do - pick up all the
-// various pieces (DAP interface, CDC ACM UART), and tie them
-// together. Sign up all tasks and start the multitasking kernel.
-// The USB configuration is mainly controlled by the configuration
-// file, depending on the MCU board.
+// picoprobe++ main code.
+// Create the objects  for the various functionalities
+// (DAP interface, CDC ACM UART, Logic Analyzer). Sign
+// up all tasks and start the multitasking kernel.
+// The USB configuration is mainly controlled by the
+// configuration file, depending on the MCU board.
 //
 #include "config.h"
 
@@ -42,18 +43,18 @@ using enum wPropertyDataType_t;
 #include "task_monitor.h"
 
 int main() {
-    // Optional: Firmware Debug UART
-    #ifdef DEBUG_UART_ENABLE
-    uart_rp2xxx uart(DEBUG_UART_TX_GPIO, DEBUG_UART_RX_GPIO);
-    posix_io::inst.register_stdio(uart);
-    #endif
+    // Get the unique ID of this MCU/board
+    auto id = unique_id_rp2xxx::read_unique_id_string();
 
     // Log levels of various components
     usb_log::inst.setLevel(usb_log::DEBUG_LEVEL_USB);
     DAP_log::inst.setLevel(DAP_log::DEBUG_LEVEL_DAP);
 
-    // Get the unique ID of this MCU/board
-    auto id = unique_id_rp2xxx::read_unique_id_string();
+    // Optional: Firmware Debug UART
+    #ifdef DEBUG_UART_ENABLE
+    uart_rp2xxx uart(DEBUG_UART_TX_GPIO, DEBUG_UART_RX_GPIO);
+    posix_io::inst.register_stdio(uart);
+    #endif
 
     // Set up USB Device driver, USB device and put
     // generic device controller on top

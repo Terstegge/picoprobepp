@@ -60,6 +60,15 @@ public:
     void write_response(char c) const;
 
     /**
+     * @brief Clear the receiver FIFO by reading
+     *        all available characters
+     */
+    // void flush_rx() {
+    //     uint8_t dummy;
+    //     while (_rx_fifo.get(dummy)) { }
+    // }
+
+    /**
      * @brief Queue a block of data to be sent to the host.
      * The data array is not copied - only the pointer to
      * the data and the length are stored in a small FIFO.
@@ -68,6 +77,15 @@ public:
      * @return false if method didn't succeed, true otherwise.
      */
     bool queue_block(uint8_t* data, size_t len);
+
+    /**
+     * @brief Check if the sending process via USB is still busy
+     * @return true if tx is busy, false if tx idle
+     */
+    bool is_tx_busy() {
+        return (_transmit_queue.available_get() != 0)
+                || (_ep_data_in->is_active());
+    }
 
     /**
      * @brief The task code
@@ -99,7 +117,7 @@ private:
     // USB output buffer, used when data ist sent to the host
     uint8_t _buffer_out[TUPP_DEFAULT_PAKET_SIZE] {};
 
-    // Data Struct to be used with the FIFO below. One entry
+    // Data struct to be used with the FIFO below. One entry
     // will store a pointer to the data and the size in bytes.
     struct la_block_t {
         uint8_t * data {nullptr};
