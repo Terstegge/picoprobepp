@@ -43,14 +43,13 @@ capture::capture() {
     multicore_rp2040::reset_core1();
     multicore_rp2040::start_on_core1([&] {
         while (true) {
-            _core1_busy = false;
             uint32_t cmd = multicore_rp2040::fifo_pop_blocking();
             switch (cmd) {
                 case CORE1_CMD_WRITE_DATA: {
-                    _core1_busy = true;
                     auto * data = (uint8_t *) multicore_rp2040::fifo_pop_blocking();
                     uint32_t samples = multicore_rp2040::fifo_pop_blocking();
                     if (_state == IDLE || samples == 0) {
+                        _core1_jobs_popped = _core1_jobs_popped + 1;
                         continue;
                     }
                     size_t rle_len = 1;
@@ -62,6 +61,7 @@ capture::capture() {
                     }
                     data_handler(data, rle_len);
                     _samples_read += samples;
+                    _core1_jobs_popped = _core1_jobs_popped + 1;
 
                     if (_samples_read >= _capture_config->post_trigger_samples) {
                         _state = IDLE;
@@ -70,12 +70,10 @@ capture::capture() {
                     break;
                 }
                 case CORE1_CMD_WAIT_FOR_TRIGGER: {
-                    _is_active  = true;
-                    _core1_busy = true;
                     wait_for_triggers();
-                    _state_mutex.lock();
-                    _state = STREAMING;
-                    _state_mutex.unlock();
+                    if (!_abort_trigger && _state == WAIT_FOR_TRIGGER) {
+                        _state = STREAMING;
+                    }
                     break;
                 }
                 default: TUPP_LOG(LOG_ERROR, "Unknow core1 command!");
@@ -85,13 +83,18 @@ capture::capture() {
 }
 
 bool capture::start(capture_config_t * c) {
+    while (_core1_jobs_pushed != _core1_jobs_popped) { }
+    _core1_jobs_pushed = 0;
+    _core1_jobs_popped = 0;
+
     abort();
 
-    _capture_config = c;
-    _is_active = true;
-    _core1_busy = false;
-    _samples_read = 0;
+    _capture_config  = c;
+    _is_active       = true;
+    _samples_read    = 0;
     _planned_samples = 0;
+    _overflow        = false;
+    _abort_trigger   = false;
 
     // Prepare DMA channels
     _dma_A->CTRL.EN       = true;
@@ -116,6 +119,13 @@ bool capture::start(capture_config_t * c) {
     }
 
     _samples_per_buffer = SAMPLE_BUFFER_SIZE / _sample_size;
+
+    // Puffergröße begrenzen, damit spätestens alle 0,5 s (sample_rate / 2) ein Block gesendet wird
+    uint32_t max_samples_half_sec = _capture_config->sample_rate / 4;
+    if (max_samples_half_sec > 0 && _samples_per_buffer > max_samples_half_sec) {
+        _samples_per_buffer = max_samples_half_sec;
+    }
+
     switch (_sample_size) {
         case 1:
             _dma_A->CTRL.DATA_SIZE = CH_CTRL_TRIG_DATA_SIZE__SIZE_BYTE;
@@ -133,100 +143,108 @@ bool capture::start(capture_config_t * c) {
             return false;
     }
 
-    dma_irq_handler(true);
-    dma_irq_handler(false);
+    // Bei hohen Frequenzen (> 15 MHz) auf die 2-Buffer-Kapazität deckeln (Burst-Modus)
+    if (_capture_config->sample_rate > 15000000) {
+        uint32_t max_burst_samples = 2 * _samples_per_buffer;
+        if (_capture_config->post_trigger_samples > max_burst_samples) {
+            _capture_config->post_trigger_samples = max_burst_samples;
+        }
+    }
 
-    _state = STREAMING;
+    // Zustand setzen: Entweder auf Hardware-Trigger warten oder direkt streamen
+    bool use_hw_trigger = has_triggers();
+    _state = use_hw_trigger ? WAIT_FOR_TRIGGER : STREAMING;
+    bool streaming = (_state == STREAMING);
+
+    // Beide DMA-Kanäle vorladen (bei WAIT_FOR_TRIGGER im endlosen Ping-Pong)
+    setup_dma_channel(_dma_A.get(), _buffer_A, streaming);
+    setup_dma_channel(_dma_B.get(), _buffer_B, streaming);
+
+    // Hardware starten
     _dma_A->trigger();
     _capture_sm->enable();
 
-//    multicore_rp2040::fifo_push_blocking(CORE1_CMD_WAIT_FOR_TRIGGER);
+    // Falls Hardware-Trigger aktiv sind, Core 1 zum Warten losschicken
+    if (use_hw_trigger) {
+        multicore_rp2040::fifo_push_blocking(CORE1_CMD_WAIT_FOR_TRIGGER);
+    }
 
     return true;
 }
 
 void capture::abort() {
-    TUPP_LOG(LOG_INFO, "abort()");
+    _state = IDLE;
+    _abort_trigger = true;
+    _is_active = false;
     _dma_A->abort();
     _dma_B->abort();
     _dma_A->clear_irq();
     _dma_B->clear_irq();
-    // Disable the DMA channels
     _dma_A->CTRL.EN = false;
     _dma_B->CTRL.EN = false;
-    // Reset SM
     _capture_sm->reset();
-    // Reset state to IDLE
-    _state = IDLE;
 }
 
-void COPY_TO_RAM capture::dma_irq_handler(bool is_A) {
-    //_state_mutex.lock();
+void COPY_TO_RAM capture::setup_dma_channel(dma_rp2xxx * dma, const uint8_t * buffer, bool is_streaming) {
+    dma->WRITE_ADDR = (uint32_t)buffer;
+
+    if (!is_streaming) {
+        dma->TRANS_COUNT = _samples_per_buffer;
+        return;
+    }
+
     size_t samples_needed = 0;
     if (_capture_config->post_trigger_samples > _planned_samples) {
         samples_needed = _capture_config->post_trigger_samples - _planned_samples;
     }
 
-    if (is_A) {
-        auto * write_addr  = (uint8_t *)_dma_A->WRITE_ADDR;
-        _dma_A->WRITE_ADDR = (uint32_t)_buffer_A;
+    if (samples_needed > _samples_per_buffer) {
+        dma->TRANS_COUNT = _samples_per_buffer;
+        _planned_samples += _samples_per_buffer;
 
-        if (_state == STREAMING) {
-            uint32_t samples = (write_addr - _buffer_A) / _sample_size;
-            if (samples > 0) {
-                while (_core1_busy) { }
-                _core1_busy = true;
-                multicore_rp2040::fifo_push_blocking(CORE1_CMD_WRITE_DATA);
-                multicore_rp2040::fifo_push_blocking((uint32_t)_buffer_A);
-                multicore_rp2040::fifo_push_blocking(samples);
+        // Prüfen, ob der aktuell laufende Partner-Puffer bereits für den Rest reicht
+        if (_capture_config->sample_rate > 15000000) {
+            size_t remaining_after_partner = samples_needed - _samples_per_buffer;
+            if (remaining_after_partner <= _samples_per_buffer) {
+                dma_rp2xxx * partner = (dma == _dma_A.get()) ? _dma_B.get() : _dma_A.get();
+                partner->CTRL.CHAIN_TO = partner->getIndex();
             }
         }
-        if (samples_needed > _samples_per_buffer) {
-            _dma_A->TRANS_COUNT = _samples_per_buffer;
-             if (_state == STREAMING) {
-                 _planned_samples += _samples_per_buffer;
-             }
-        } else if (samples_needed > 0) {
-            _dma_A->TRANS_COUNT   = samples_needed;
-            _dma_A->CTRL.CHAIN_TO = _dma_A->getIndex();
-             if (_state == STREAMING) {
-                 _planned_samples += samples_needed;
-             }
-        } else {
-            _dma_A->CTRL.EN = false;
-        }
+    } else if (samples_needed > 0) {
+        dma->TRANS_COUNT   = samples_needed;
+        dma->CTRL.CHAIN_TO = dma->getIndex();
+        _planned_samples += samples_needed;
+    } else {
+        dma->CTRL.EN = false;
     }
-    else {
-        auto * write_addr  = (uint8_t *)_dma_B->WRITE_ADDR;
-        _dma_B->WRITE_ADDR = (uint32_t)_buffer_B;
-
-        if (_state == STREAMING) {
-            uint32_t samples = (write_addr - _buffer_B) / _sample_size;
-            if (samples > 0) {
-                while (_core1_busy) { }
-                _core1_busy = true;
-                multicore_rp2040::fifo_push_blocking(CORE1_CMD_WRITE_DATA);
-                multicore_rp2040::fifo_push_blocking((uint32_t)_buffer_B);
-                multicore_rp2040::fifo_push_blocking(samples);
-            }
-        }
-        if (samples_needed > _samples_per_buffer) {
-            _dma_B->TRANS_COUNT = _samples_per_buffer;
-            if (_state == STREAMING) {
-                _planned_samples += _samples_per_buffer;
-            }
-        } else if (samples_needed > 0) {
-            _dma_B->TRANS_COUNT   = samples_needed;
-            _dma_B->CTRL.CHAIN_TO = _dma_B->getIndex();
-            if (_state == STREAMING) {
-                _planned_samples += samples_needed;
-            }
-        } else {
-            _dma_B->CTRL.EN = false;
-        }
-    }
-    //_state_mutex.unlock();
 }
+
+void COPY_TO_RAM capture::dma_irq_handler(bool is_A) {
+    bool streaming = (_state == STREAMING);
+
+    dma_rp2xxx * dma    = is_A ? _dma_A.get() : _dma_B.get();
+    uint8_t *    buffer = is_A ? _buffer_A    : _buffer_B;
+
+    auto * write_addr = (uint8_t *)dma->WRITE_ADDR;
+
+    if (streaming) {
+        uint32_t samples = (write_addr - buffer) / _sample_size;
+        if (samples > 0) {
+            if ((_core1_jobs_pushed - _core1_jobs_popped) > 1) {
+                _overflow = true;
+                abort();
+                return;
+            }
+            _core1_jobs_pushed = _core1_jobs_pushed + 1;
+            multicore_rp2040::fifo_push_blocking(CORE1_CMD_WRITE_DATA);
+            multicore_rp2040::fifo_push_blocking((uint32_t)buffer);
+            multicore_rp2040::fifo_push_blocking(samples);
+        }
+    }
+    // Kanal für den nächsten Durchlauf neu programmieren
+    setup_dma_channel(dma, buffer, streaming);
+}
+
 
 size_t COPY_TO_RAM capture::write_rle4_data(uint8_t * data, size_t len) {
     if (data == nullptr || len == 0) return 0;

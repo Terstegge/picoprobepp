@@ -266,10 +266,14 @@ LA_protocol::LA_protocol(usb_la_device & usb)
                     // Add some time so pulseview can process the last samples
                     task::sleep_ms(50);
 
-                    char buf[20];
-                    sprintf(buf, "$%d+", _total_bytes_sent);
-                    TUPP_LOG(LOG_INFO, "Sending final byte count '%s'", buf);
-                    _usb.write_response(buf);
+                    if (_capture.has_overflow()) {
+                        _usb.write_response("!");
+                    } else {
+                        char buf[20];
+                        sprintf(buf, "$%d+", _total_bytes_sent);
+                        TUPP_LOG(LOG_INFO, "Sending final byte count '%s'", buf);
+                        _usb.write_response(buf);
+                    }
                     TUPP_LOG(LOG_INFO, "End Sampling...");
                 } else {
                     TUPP_LOG(LOG_ERROR, "Capture start() failed!!");

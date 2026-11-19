@@ -15,7 +15,6 @@
 
 #include "trigger.h"
 #include "config.h"
-#include "mutex.h"
 #include <array>
 
 #define SAMPLE_BUFFER_SIZE 100000
@@ -38,6 +37,7 @@ public:
     bool start(capture_config_t * c);
     void abort();
     bool is_active() const {return _is_active;}
+    bool has_overflow() const { return _overflow; }
 
     // Callback handlers for Sample processing
     std::function<void(uint8_t *, uint32_t)> data_handler;
@@ -51,6 +51,13 @@ private:
         STREAMING
     };
 
+    bool has_triggers() const {
+        for (const auto & t : _capture_config->trigger_stages) {
+            if (t.is_set()) return true;
+        }
+        return false;
+    }
+
     /**
      * @brief Wait for all triggers. The method returns when all
      * triggers stages have fired. The method is moved to RAM so
@@ -58,32 +65,21 @@ private:
      */
     void COPY_TO_RAM wait_for_triggers() {
         for (auto & t: _capture_config->trigger_stages) {
-            t.wait();
+            t.wait(_abort_trigger);
         }
     }
 
-    static size_t COPY_TO_RAM write_rle4_data  (uint8_t * data, size_t len);
-    static void   COPY_TO_RAM write_rle4_sample(uint8_t * & write_ptr,
-                                                size_t rle_count,
-                                                uint8_t last);
+    volatile bool _abort_trigger {false};
 
-    static size_t COPY_TO_RAM write_rle11_data  (uint8_t * data, size_t len);
-    static void   COPY_TO_RAM write_rle11_sample(uint8_t * & write_ptr,
-                                                 size_t rle_count,
-                                                 uint16_t last);
-
-    static size_t COPY_TO_RAM write_rle25_data  (uint8_t * data, size_t len);
-    static void   COPY_TO_RAM write_rle25_sample(uint8_t * & write_ptr,
-                                                 size_t rle_count,
-                                                 uint32_t last);
-
+    void COPY_TO_RAM setup_dma_channel(dma_rp2xxx * dma, const uint8_t * buffer, bool is_streaming);
     void COPY_TO_RAM dma_irq_handler(bool is_A);
 
     volatile capture_status_t   _state {IDLE};
-    mutex                       _state_mutex;
-    const capture_config_t *    _capture_config {nullptr};
+    capture_config_t *          _capture_config {nullptr};
     volatile bool               _is_active {false};
-    volatile bool               _core1_busy {false};
+    volatile uint32_t           _core1_jobs_pushed {0};
+    volatile uint32_t           _core1_jobs_popped {0};
+    volatile bool               _overflow {false};
 
     // Digital input pins
     gpio_rp2xxx _d_channels[LA_D_CHANNEL_COUNT];
@@ -103,6 +99,21 @@ private:
     uint32_t _samples_per_buffer {0};
     uint32_t _samples_read {0};
     uint32_t _planned_samples {0};
+
+    static size_t COPY_TO_RAM write_rle4_data  (uint8_t * data, size_t len);
+    static void   COPY_TO_RAM write_rle4_sample(uint8_t * & write_ptr,
+                                                size_t rle_count,
+                                                uint8_t last);
+
+    static size_t COPY_TO_RAM write_rle11_data  (uint8_t * data, size_t len);
+    static void   COPY_TO_RAM write_rle11_sample(uint8_t * & write_ptr,
+                                                 size_t rle_count,
+                                                 uint16_t last);
+
+    static size_t COPY_TO_RAM write_rle25_data  (uint8_t * data, size_t len);
+    static void   COPY_TO_RAM write_rle25_sample(uint8_t * & write_ptr,
+                                                 size_t rle_count,
+                                                 uint32_t last);
 };
 
 #endif // CAPTURE_H

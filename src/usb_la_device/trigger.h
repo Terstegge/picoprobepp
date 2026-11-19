@@ -59,8 +59,9 @@ public:
     /**
      * @brief Wait until the trigger fires. The method is moved
      * to RAM so we have a deterministic timing.
+     * @param abort_flag If true, will terminate the wait process
      */
-    void COPY_TO_RAM wait() const;
+    void COPY_TO_RAM wait(const volatile bool & abort_flag) const;
 
 private:
     trigger_type        _trigger_type {NONE};
