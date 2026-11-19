@@ -15,10 +15,9 @@
 #include <cstdio>
 #include <cstdlib>
 
-LA_protocol::LA_protocol(usb_la_device &usb)
-    : task("LA PROTOCOL"), _usb(usb) {
+LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
     // Forward prepared RLE or mixed-signal sample blocks from Core 1 to the USB TX queue
-    _capture.data_handler = [&](uint8_t *data, const size_t len) {
+    _capture.data_handler = [&](uint8_t * data, const size_t len) {
         _usb.queue_block(data, len);
         _total_bytes_sent += len;
     };
@@ -26,21 +25,21 @@ LA_protocol::LA_protocol(usb_la_device &usb)
 
 [[noreturn]] void LA_protocol::run() {
     while (true) {
-        size_t cmd_index{0};
-        char c{0};
-        bool cmd_received{false};
+        size_t cmd_index {0};
+        char   c {0};
+        bool   cmd_received {false};
 
         // Read a new command line (terminated by \r or \n, except single-char '*' and '+')
         do {
             c = _usb.getc();
             switch (c) {
-                case '*': // Immediate reset without line ending
-                case '+': // Immediate abort without line ending
+                case '*':   // Immediate reset without line ending
+                case '+':   // Immediate abort without line ending
                     _cmd_str[cmd_index++] = c;
-                    _cmd_str[cmd_index] = 0;
+                    _cmd_str[cmd_index]   = 0;
                     cmd_received = true;
                     break;
-                case '\r': // Line end -> terminate command string
+                case '\r':  // Line end -> terminate command string
                 case '\n':
                     _cmd_str[cmd_index] = 0;
                     cmd_received = true;
@@ -80,7 +79,7 @@ LA_protocol::LA_protocol(usb_la_device &usb)
             // i: Report device identification and capabilities
             // Reply format: SRPICO,AxxyDzz,vv
             //   xx : Number of analog channels
-            //   y  : Bytes per analog sample (2 = 14-bit / 12-bit 2x7-bit encoding)
+            //   y  : Bytes per analog sample (2 = 12-bit encoded as two 7-bit bytes)
             //   zz : Number of digital channels
             //   vv : Protocol version (02)
             case 'i': {
@@ -92,14 +91,12 @@ LA_protocol::LA_protocol(usb_la_device &usb)
             // n: Report channel name
             // Format: n<A/D>xx -> Reply: A<gpio> or D<gpio>
             case 'n': {
-                char type = _cmd_str[1];
+                char     type    = _cmd_str[1];
                 uint16_t channel = atoi(_cmd_str.data() + 2);
                 if (type == 'A') {
-                    sprintf(_resp_str.data(), "A%d",
-                            channel + LA_A_CHANNEL_START);
+                    sprintf(_resp_str.data(), "A%d", channel + LA_A_CHANNEL_START);
                 } else if (type == 'D') {
-                    sprintf(_resp_str.data(), "D%d",
-                            channel + LA_D_CHANNEL_START);
+                    sprintf(_resp_str.data(), "D%d", channel + LA_D_CHANNEL_START);
                 }
                 TUPP_LOG(LOG_INFO, "Name for channel %c%d set to %s",
                          type, channel, _resp_str.data());
@@ -153,13 +150,12 @@ LA_protocol::LA_protocol(usb_la_device &usb)
             // R: Set sample rate in Hz (Format: R<rate>)
             case 'R': {
                 uint32_t rate = atol(_cmd_str.data() + 1);
-                if (rate >= 5000 && rate <= 200000000) {
-                    _capture_config.sample_rate = rate;
-                    TUPP_LOG(LOG_INFO, "Sample rate set to: %u Hz", rate);
+                _capture.set_sample_rate(&_capture_config, rate);
+                if (rate != _capture_config.sample_rate) {
+                    sprintf(_resp_str.data(), "*%lu", _capture_config.sample_rate);
+                    TUPP_LOG(LOG_INFO, "Sample rate response: %s", _resp_str.data());
                 } else {
-                    TUPP_LOG(LOG_ERROR, "Unsupported sample rate: %s",
-                             _cmd_str.data());
-                    send_response = false;
+                    TUPP_LOG(LOG_INFO, "Sample rate set to: %d Hz", rate);
                 }
                 break;
             }
@@ -167,22 +163,21 @@ LA_protocol::LA_protocol(usb_la_device &usb)
             case 'L': {
                 uint32_t limit = atol(_cmd_str.data() + 1);
                 _capture_config.post_trigger_samples = limit;
-                TUPP_LOG(LOG_INFO, "Sample limit set to: %u", limit);
+                TUPP_LOG(LOG_INFO, "Sample limit set to: %d", limit);
                 break;
             }
             // p: Set pre-trigger sample count (Format: p<#samples>)
             case 'p': {
                 uint32_t count = atol(_cmd_str.data() + 1);
                 _capture_config.pre_trigger_samples = count;
-                TUPP_LOG(LOG_INFO, "Pre-trigger samples set to: %u", count);
+                TUPP_LOG(LOG_INFO, "Pre-trigger samples set to: %d", count);
                 break;
             }
             // t: Configure a hardware trigger condition
             // Format: tvxx (v: 0=LOW, 1=HIGH, 2=RISING, 3=FALLING, 4=EDGE; xx: channel index)
             case 't': {
                 uint8_t channel = atoi(_cmd_str.data() + 2);
-                if (channel >= LA_D_CHANNEL_COUNT || _trigger_stage >=
-                    LA_D_CHANNEL_COUNT) {
+                if (channel >= LA_D_CHANNEL_COUNT || _trigger_stage >= LA_D_CHANNEL_COUNT) {
                     TUPP_LOG(LOG_ERROR, "Invalid trigger index %d or stage %d",
                              channel, _trigger_stage);
                     send_response = false;
@@ -190,90 +185,76 @@ LA_protocol::LA_protocol(usb_la_device &usb)
                 }
                 switch (_cmd_str[1]) {
                     case '0': {
-                        TUPP_LOG(LOG_INFO,
-                                 "Setting Trigger LOW for channel %d at stage %d",
+                        TUPP_LOG(LOG_INFO, "Setting Trigger LOW for channel %d at stage %d",
                                  channel, _trigger_stage);
                         _capture_config.trigger_stages[_trigger_stage].set(
                             LEVEL_LOW, channel + LA_D_CHANNEL_START);
                         break;
                     }
                     case '1': {
-                        TUPP_LOG(LOG_INFO,
-                                 "Setting Trigger HIGH for channel %d at stage %d",
+                        TUPP_LOG(LOG_INFO, "Setting Trigger HIGH for channel %d at stage %d",
                                  channel, _trigger_stage);
                         _capture_config.trigger_stages[_trigger_stage].set(
                             LEVEL_HIGH, channel + LA_D_CHANNEL_START);
                         break;
                     }
                     case '2': {
-                        if (_capture_config.trigger_stages[_trigger_stage].
-                            is_set()) {
+                        if (_capture_config.trigger_stages[_trigger_stage].is_set()) {
                             _trigger_stage++;
                         }
                         if (_trigger_stage < LA_D_CHANNEL_COUNT) {
-                            TUPP_LOG(LOG_INFO,
-                                     "Setting Trigger RISING for channel %d at stage %d",
+                            TUPP_LOG(LOG_INFO, "Setting Trigger RISING for channel %d at stage %d",
                                      channel, _trigger_stage);
-                            _capture_config.trigger_stages[_trigger_stage++].
-                                    set(
-                                        RISING, channel + LA_D_CHANNEL_START);
+                            _capture_config.trigger_stages[_trigger_stage++].set(
+                                RISING, channel + LA_D_CHANNEL_START);
                         }
                         break;
                     }
                     case '3': {
-                        if (_capture_config.trigger_stages[_trigger_stage].
-                            is_set()) {
+                        if (_capture_config.trigger_stages[_trigger_stage].is_set()) {
                             _trigger_stage++;
                         }
                         if (_trigger_stage < LA_D_CHANNEL_COUNT) {
-                            TUPP_LOG(LOG_INFO,
-                                     "Setting Trigger FALLING for channel %d at stage %d",
+                            TUPP_LOG(LOG_INFO, "Setting Trigger FALLING for channel %d at stage %d",
                                      channel, _trigger_stage);
-                            _capture_config.trigger_stages[_trigger_stage++].
-                                    set(
-                                        FALLING, channel + LA_D_CHANNEL_START);
+                            _capture_config.trigger_stages[_trigger_stage++].set(
+                                FALLING, channel + LA_D_CHANNEL_START);
                         }
                         break;
                     }
                     case '4': {
-                        if (_capture_config.trigger_stages[_trigger_stage].
-                            is_set()) {
+                        if (_capture_config.trigger_stages[_trigger_stage].is_set()) {
                             _trigger_stage++;
                         }
                         if (_trigger_stage < LA_D_CHANNEL_COUNT) {
-                            TUPP_LOG(LOG_INFO,
-                                     "Setting Trigger EDGE for channel %d at stage %d",
-                                     channel, _trigger_stage);
-                            _capture_config.trigger_stages[_trigger_stage++].
-                                    set(
-                                        EDGE, channel + LA_D_CHANNEL_START);
+                            TUPP_LOG(LOG_INFO, "Setting Trigger EDGE for channel %d at stage %d",
+                            channel, _trigger_stage);
+                            _capture_config.trigger_stages[_trigger_stage++].set(
+                            EDGE, channel + LA_D_CHANNEL_START);
                         }
                         break;
                     }
                     default: {
-                        TUPP_LOG(LOG_ERROR, "Unsupported trigger type %c",
-                                 _cmd_str[1]);
+                        TUPP_LOG(LOG_ERROR, "Unsupported trigger type %c", _cmd_str[1]);
                     }
                 }
                 break;
             }
-            // F: Start untriggered capture
-            // C: Start triggered capture
+                // F: Start untriggered capture
+                // C: Start triggered capture
             case 'F':
             case 'C': {
-                TUPP_LOG(LOG_INFO, "Start sampling with command %c",
-                         _cmd_str[0]);
+                TUPP_LOG(LOG_INFO, "Start sampling with command %c", _cmd_str[0]);
                 send_response = false;
                 _capture_config.digital_channels_base = LA_D_CHANNEL_START;
-                _capture_config.analog_channel_base = LA_A_CHANNEL_START;
+                _capture_config.analog_channel_base   = LA_A_CHANNEL_START;
                 _total_bytes_sent = 0;
                 if (_capture.start(&_capture_config)) {
                     while (_capture.is_active()) {
                         sleep_ms(5);
                         if (_usb.available()) {
                             char cmd = _usb.getc();
-                            TUPP_LOG(LOG_INFO, "Received %c while sampling",
-                                     cmd);
+                            TUPP_LOG(LOG_INFO, "Received %c while sampling", cmd);
                             if (cmd == '+' || cmd == '*') {
                                 break;
                             }
@@ -315,10 +296,10 @@ LA_protocol::LA_protocol(usb_la_device &usb)
 
 void LA_protocol::reset() {
     _capture_config.digital_channels_mask = 0;
-    _capture_config.analog_channels_mask = 0;
+    _capture_config.analog_channels_mask  = 0;
     _total_bytes_sent = 0;
-    _trigger_stage = 0;
-    for (auto &t: _capture_config.trigger_stages) {
+    _trigger_stage    = 0;
+    for (auto & t : _capture_config.trigger_stages) {
         t.reset();
     }
 }

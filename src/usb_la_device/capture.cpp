@@ -129,6 +129,23 @@ capture::capture() {
     });
 }
 
+void capture::set_sample_rate(capture_config_t * c, uint32_t rate) const {
+    TUPP_LOG(LOG_INFO, "set_sample_rate(%u)", rate);
+    if (rate < 5000) {
+        rate = 5000;
+    } else if (rate > 200000000) {
+        rate = 200000000;
+    }
+    if (c->analog_channels_mask != 0) {
+        uint8_t num_a = std::popcount(c->analog_channels_mask);
+        uint32_t max_adc_rate = MAX_TOTAL_ADC_RATE_HZ / num_a;
+        if (rate > max_adc_rate) {
+            rate = max_adc_rate;
+        }
+    }
+    c->sample_rate = rate;
+}
+
 void capture::configure_adc(uint8_t analog_mask, uint32_t sample_rate) {
     using namespace _IO_BANK0_;
     using namespace _RESETS_;
@@ -217,7 +234,6 @@ bool capture::start(capture_config_t *c) {
     if (!has_dig && !has_adc) return false;
 
     uint8_t num_d = std::bit_width(d_mask);
-    uint8_t num_a = std::popcount(a_mask);
 
     // Determine raw digital sample width (1, 2, or 4 bytes)
     if (has_dig) {
@@ -226,14 +242,6 @@ bool capture::start(capture_config_t *c) {
         if (num_d > 11) _sample_size += 2;
     } else {
         _sample_size = 1;
-    }
-
-    // Clamp sample rate in analog/mixed mode to ADC and USB Full-Speed limits
-    if (has_adc) {
-        uint32_t max_adc_rate = MAX_TOTAL_ADC_RATE_HZ / num_a;
-        if (_capture_config->sample_rate > max_adc_rate) {
-            _capture_config->sample_rate = max_adc_rate;
-        }
     }
 
     // Configure PIO state machine before ADC so analog pin muxing is not overwritten

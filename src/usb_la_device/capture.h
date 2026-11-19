@@ -78,6 +78,8 @@ public:
     /// mixed data block is ready for USB TX
     std::function<void(uint8_t *, uint32_t)> data_handler;
 
+    void set_sample_rate(capture_config_t * c, uint32_t rate) const;
+
 private:
     enum capture_status_t {
         IDLE,
@@ -95,7 +97,7 @@ private:
 
     // Rate thresholds and hardware clock constants
     static constexpr uint32_t MAX_STREAMING_RATE_HZ  = 15000000;
-    static constexpr uint32_t MAX_TOTAL_ADC_RATE_HZ  = 400000;
+    static constexpr uint32_t MAX_TOTAL_ADC_RATE_HZ  = 200000;
     static constexpr uint32_t ADC_CLOCK_HZ           = 48000000;
 
     /**
