@@ -71,10 +71,10 @@ LA_protocol::LA_protocol(usb_la_device & usb)
             // i: Report Device information
             // Reply: SRPICO,AxxyDzz,vv
             // xx,zz: Number of analog/digital channels
-            // y:     Analog sample size (1)
+            // y:     Analog sample size (2)
             // vv:    Version (02)
             case 'i': {
-                sprintf(_resp_str.data(), "SRPICO,A%02d1D%02d,02",
+                sprintf(_resp_str.data(), "SRPICO,A%02d2D%02d,02",
                         LA_A_CHANNEL_COUNT, LA_D_CHANNEL_COUNT);
                 TUPP_LOG(LOG_INFO, "ID: %s", _resp_str.data());
                 break;
@@ -107,7 +107,7 @@ LA_protocol::LA_protocol(usb_la_device & usb)
                 int channel = atoi(_cmd_str.data()+1);
                 if (channel >= 0) {
                     // scale and offset are both in integer uVolts separated by x
-                    sprintf(_resp_str.data(), "25781x0"); // 3.3/(2^7) and 0V offset
+                    sprintf(_resp_str.data(), "806x0"); // 3.3/(2^7) and 0V offset
                     TUPP_LOG(LOG_INFO, "Analog Scale for A%d set", channel);
                 }
                 break;
@@ -117,12 +117,18 @@ LA_protocol::LA_protocol(usb_la_device & usb)
             // x:  0 disable channel, 1 enable channel
             // yy: Channel number
             case 'D': {
-                if (_cmd_str[1] == '0') break;
-                uint8_t d_channels = atoi(_cmd_str.data()+2) + 1;
-                if (d_channels > _capture_config.number_of_digital_channels) {
-                    _capture_config.number_of_digital_channels = d_channels;
-                    TUPP_LOG(LOG_INFO, "Number of D channels set to %d", d_channels);
+                uint8_t ch = atoi(_cmd_str.data() + 2);
+                if (ch >= LA_D_CHANNEL_COUNT) {
+                    send_response = false;
+                    break;
                 }
+                if (_cmd_str[1] == '1') {
+                    _capture_config.digital_channels_mask |= (1u << ch);
+                } else {
+                    _capture_config.digital_channels_mask &= ~(1u << ch);
+                }
+                TUPP_LOG(LOG_INFO, "D channel mask: 0x%08X",
+                            _capture_config.digital_channels_mask);
                 break;
             }
             // A: enable/disable analog channel
@@ -130,11 +136,15 @@ LA_protocol::LA_protocol(usb_la_device & usb)
             // x:  0 disable channel, 1 enable channel
             // yy: Channel number
             case 'A': {
-                if (_cmd_str[1] == '0') break;
-                uint8_t a_channels = atoi(_cmd_str.data()+2) + 1;
-                if (a_channels > _capture_config.number_of_analog_channels) {
-                    _capture_config.number_of_analog_channels = a_channels;
-                    TUPP_LOG(LOG_INFO, "Number of A channels set to %d", a_channels);
+                uint8_t ch = atoi(_cmd_str.data() + 2);
+                if (ch >= LA_A_CHANNEL_COUNT) {
+                    send_response = false;
+                    break;
+                }
+                if (_cmd_str[1] == '1') {
+                    _capture_config.analog_channels_mask |= (1u << ch);
+                } else {
+                    _capture_config.analog_channels_mask &= ~(1u << ch);
                 }
                 break;
             }
@@ -259,9 +269,11 @@ LA_protocol::LA_protocol(usb_la_device & usb)
                     }
                     _capture.abort();
 
+                    TUPP_LOG(LOG_INFO, "Waiting for USB while busy");
                     while (_usb.is_tx_busy()) {
                         sleep_ms(1);
                     }
+                    TUPP_LOG(LOG_INFO, "USB not busy any more");
 
                     // Add some time so pulseview can process the last samples
                     task::sleep_ms(50);
@@ -293,8 +305,8 @@ LA_protocol::LA_protocol(usb_la_device & usb)
     }
 }
  void LA_protocol::reset() {
-    _capture_config.number_of_digital_channels = 0;
-    _capture_config.number_of_analog_channels = 0;
+    _capture_config.digital_channels_mask = 0;
+    _capture_config.analog_channels_mask = 0;
     _total_bytes_sent = 0;
     _trigger_stage = 0;
     for (auto & t : _capture_config.trigger_stages) {
