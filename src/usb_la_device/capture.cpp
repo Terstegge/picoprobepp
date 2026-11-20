@@ -63,7 +63,7 @@ capture::capture() {
     // Initialize digital input pins with internal pull-ups
     for (uint8_t ch = 0; ch < LA_D_CHANNEL_COUNT; ch++) {
         _d_channels[ch].setGpio(LA_D_CHANNEL_START + ch);
-        _d_channels[ch].gpioMode(GPIO::INPUT | GPIO::PULLUP);
+        _d_channels[ch].gpioMode(GPIO::INPUT);
     }
 
     // Launch Core 1 worker loop for hardware trigger polling and RLE/slice encoding

@@ -112,4 +112,13 @@
 #define UART_TARGET_RX_GPIO         TARGET_UART_RX  // target to probe
 #define UART_TARGET_BUFFER_SIZE     1024
 
+//////////////////////////////////
+// Logic Analyzer configuration //
+//////////////////////////////////
+//#define LA_SUPPORT                  true            // Enable the Logic Analyzer
+#define LA_D_CHANNEL_START          16
+#define LA_D_CHANNEL_COUNT          10
+#define LA_A_CHANNEL_START          26
+#define LA_A_CHANNEL_COUNT          4
+
 #endif // CONFIG_RPI_PICO_H

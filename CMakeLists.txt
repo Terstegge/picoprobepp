@@ -6,9 +6,9 @@ cmake_minimum_required(VERSION 3.20)
 # set(YAHAL_BOARD "rpi-pico2")
 # set(YAHAL_BOARD "rpi-debug-probe")
 
-set(YAHAL_BOARD "rp2040-launchpad")
+# set(YAHAL_BOARD "rp2040-launchpad")
 # set(YAHAL_BOARD "rp2350-launchpad")
-# set(YAHAL_BOARD "rp2xxx-launchpad-probe")
+set(YAHAL_BOARD "rp2xxx-launchpad-probe")
 
 # Locate the YAHAL library folder
 include(YAHAL_import.cmake)

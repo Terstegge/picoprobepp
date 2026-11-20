@@ -117,7 +117,7 @@
 //////////////////////////////////
 // Logic Analyzer configuration //
 //////////////////////////////////
-#define LA_SUPPORT                  true            // Enable the Logic Analyzer
+#define LA_SUPPORT                  true        // Enable the Logic Analyzer
 #define LA_D_CHANNEL_START          16
 #define LA_D_CHANNEL_COUNT          10
 #define LA_A_CHANNEL_START          26
