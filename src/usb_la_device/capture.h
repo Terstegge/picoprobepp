@@ -80,6 +80,10 @@ public:
 
     void set_sample_rate(capture_config_t * c, uint32_t rate) const;
 
+    void get_limits(uint8_t a_mask, uint32_t d_mask,
+                    uint64_t & min_rate, uint64_t & max_stream_rate,
+                    uint64_t & max_bulk_rate, uint64_t & max_bulk_samples) const;
+
 private:
     enum capture_status_t {
         IDLE,

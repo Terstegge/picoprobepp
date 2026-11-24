@@ -129,6 +129,46 @@ capture::capture() {
     });
 }
 
+void capture::get_limits(uint8_t a_mask, uint32_t d_mask,
+                uint64_t & min_rate, uint64_t & max_stream_rate,
+                uint64_t & max_bulk_rate, uint64_t & max_bulk_samples) const {
+    uint8_t a_cnt = std::popcount(a_mask);
+    min_rate = 5000;
+
+    if (a_cnt > 0) {
+        // 1. Hardware-ADC-Limit (200 kSps gesamt / Anzahl aktive Analogkanäle)
+        uint64_t adc_limit = MAX_TOTAL_ADC_RATE_HZ / a_cnt;
+
+        // 2. USB-Bandbreitenlimit (ca. 950 kB/s sicherer Dauerstrom)
+        uint32_t bytes_per_slice = a_cnt * 2;
+        for (uint8_t bit = 0; bit < LA_D_CHANNEL_COUNT; bit += 7) {
+            if ((d_mask >> bit) & 0x7F) {
+                bytes_per_slice++;
+            }
+        }
+        constexpr uint64_t SAFE_USB_BPS = 950000ULL;
+        uint64_t usb_limit = SAFE_USB_BPS / bytes_per_slice;
+
+        uint64_t eff_max = std::min(adc_limit, usb_limit);
+        if (eff_max < min_rate) eff_max = min_rate;
+
+        max_stream_rate  = eff_max;
+        max_bulk_rate    = eff_max;
+        max_bulk_samples = 1000000000ULL;
+    } else {
+        // Rein digitaler Modus: RLE-Streaming bis 15 MHz, darüber 2x 100 KB Burst
+        max_stream_rate = MAX_STREAMING_RATE_HZ;
+        max_bulk_rate   = 200000000ULL;
+
+        uint8_t num_d = std::bit_width(d_mask);
+        uint8_t sample_size = 1;
+        if (num_d > 4)  sample_size += 1;
+        if (num_d > 11) sample_size += 2;
+
+        max_bulk_samples = (2ULL * SAMPLE_BUFFER_SIZE) / sample_size;
+    }
+}
+
 void capture::set_sample_rate(capture_config_t * c, uint32_t rate) const {
     TUPP_LOG(LOG_INFO, "set_sample_rate(%u)", rate);
     if (rate < 5000) {

@@ -45,8 +45,8 @@ private:
     size_t                  _total_bytes_sent {0};
     uint8_t                 _trigger_stage {0};
 
-    std::array<char, 20>    _cmd_str  {};
-    std::array<char, 20>    _resp_str {};
+    std::array<char, 64>    _cmd_str  {};
+    std::array<char, 64>    _resp_str {};
 
     /**
      * @brief Reset channel masks, byte counters, and all configured trigger stages.

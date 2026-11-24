@@ -68,6 +68,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                 reset();
                 break;
             }
+
             // +: Abort active acquisition
             case '+': {
                 TUPP_LOG(LOG_INFO, "Received + -> Abort");
@@ -76,6 +77,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                 reset();
                 break;
             }
+
             // i: Report device identification and capabilities
             // Reply format: SRPICO,AxxyDzz,vv
             //   xx : Number of analog channels
@@ -88,6 +90,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                 TUPP_LOG(LOG_INFO, "ID: %s", _resp_str.data());
                 break;
             }
+
             // n: Report channel name
             // Format: n<A/D>xx -> Reply: A<gpio> or D<gpio>
             case 'n': {
@@ -102,6 +105,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                          type, channel, _resp_str.data());
                 break;
             }
+
             // a: Report analog scale and offset in microvolts
             // Format: axx -> Reply: <uV per LSB>x<offset in uV>
             case 'a': {
@@ -113,6 +117,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                 }
                 break;
             }
+
             // D: Enable or disable a digital channel
             // Format: Dxyy (x: 0=disable, 1=enable; yy: channel index)
             case 'D': {
@@ -130,6 +135,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                          _capture_config.digital_channels_mask);
                 break;
             }
+
             // A: Enable or disable an analog channel
             // Format: Axyy (x: 0=disable, 1=enable; yy: channel index)
             case 'A': {
@@ -147,6 +153,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                          _capture_config.analog_channels_mask);
                 break;
             }
+
             // R: Set sample rate in Hz (Format: R<rate>)
             case 'R': {
                 uint32_t rate = atol(_cmd_str.data() + 1);
@@ -159,6 +166,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                 }
                 break;
             }
+
             // L: Set post-trigger sample limit (Format: L<#samples>)
             case 'L': {
                 uint32_t limit = atol(_cmd_str.data() + 1);
@@ -166,6 +174,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                 TUPP_LOG(LOG_INFO, "Sample limit set to: %d", limit);
                 break;
             }
+
             // p: Set pre-trigger sample count (Format: p<#samples>)
             case 'p': {
                 uint32_t count = atol(_cmd_str.data() + 1);
@@ -173,6 +182,7 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                 TUPP_LOG(LOG_INFO, "Pre-trigger samples set to: %d", count);
                 break;
             }
+
             // t: Configure a hardware trigger condition
             // Format: tvxx (v: 0=LOW, 1=HIGH, 2=RISING, 3=FALLING, 4=EDGE; xx: channel index)
             case 't': {
@@ -240,8 +250,38 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                 }
                 break;
             }
-                // F: Start untriggered capture
-                // C: Start triggered capture
+
+            // M: Query dynamic limits for active channel masks
+            // Format: M<a_mask_hex>,<d_mask_hex>
+            case 'M': {
+                char *comma = strchr(_cmd_str.data() + 1, ',');
+                if (!comma) {
+                    TUPP_LOG(LOG_ERROR, "Invalid M command: %s", _cmd_str.data());
+                    send_response = false;
+                    break;
+                }
+                *comma = '\0';
+                uint32_t a_mask = strtoul(_cmd_str.data() + 1, nullptr, 16);
+                uint32_t d_mask = strtoul(comma + 1, nullptr, 16);
+
+                uint64_t min_r = 0, max_stream = 0, max_bulk = 0, max_samples = 0;
+                _capture.get_limits(static_cast<uint8_t>(a_mask), d_mask,
+                                    min_r, max_stream, max_bulk, max_samples);
+
+                sprintf(_resp_str.data(), "*%lu,%lu,%lu,%lu",
+                        static_cast<unsigned long>(min_r),
+                        static_cast<unsigned long>(max_stream),
+                        static_cast<unsigned long>(max_bulk),
+                        static_cast<unsigned long>(max_samples));
+                TUPP_LOG(LOG_INFO, "Limits (A=0x%x, D=0x%x) -> %s",
+                         static_cast<unsigned int>(a_mask),
+                         static_cast<unsigned int>(d_mask),
+                         _resp_str.data());
+                break;
+            }
+
+            // F: Start untriggered capture
+            // C: Start triggered capture
             case 'F':
             case 'C': {
                 TUPP_LOG(LOG_INFO, "Start sampling with command %c", _cmd_str[0]);
@@ -270,10 +310,9 @@ LA_protocol::LA_protocol(usb_la_device & usb) : task("LA PROTOCOL"), _usb(usb) {
                     if (_capture.has_overflow()) {
                         _usb.write_response("!");
                     } else {
-                        char buf[20];
-                        sprintf(buf, "$%u+", _total_bytes_sent);
-                        TUPP_LOG(LOG_INFO, "Sending final byte count '%s'", buf);
-                        _usb.write_response(buf);
+                        sprintf(_resp_str.data(), "$%u+",_total_bytes_sent);
+                        TUPP_LOG(LOG_INFO, "Sending final byte count '%s'", _resp_str.data());
+                        _usb.write_response(_resp_str.data());
                     }
                     TUPP_LOG(LOG_INFO, "End sampling");
                 } else {

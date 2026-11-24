@@ -60,15 +60,6 @@ public:
     void write_response(char c) const;
 
     /**
-     * @brief Clear the receiver FIFO by reading
-     *        all available characters
-     */
-    // void flush_rx() {
-    //     uint8_t dummy;
-    //     while (_rx_fifo.get(dummy)) { }
-    // }
-
-    /**
      * @brief Queue a block of data to be sent to the host.
      * The data array is not copied - only the pointer to
      * the data and the length are stored in a small FIFO.

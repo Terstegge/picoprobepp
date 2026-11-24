@@ -25,6 +25,7 @@
 //#define DEBUG_USB_UART_ENABLE                   // Enable debug output via separate CDC ACM device
 #define DEBUG_LEVEL_USB	            LOG_INFO
 #define DEBUG_LEVEL_DAP             LOG_INFO
+#define DEBUG_LEVEL_LA              LOG_INFO
 //#define START_TASK_MONITOR                      // Start the task monitor
 
 ///////////////////////
